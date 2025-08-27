@@ -1,0 +1,38 @@
+# Переменные окружения
+.env
+
+# База данных 
+*.db
+sql_app.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Логи
+*.log
+logs/
+
+# Операционная система
+.DS_Store
+Thumbs.db
+
+# Миграции (если нужно игнорировать)
+# alembic/versions/
+
+# Временные файлы
+*.tmp
+*.bak
+

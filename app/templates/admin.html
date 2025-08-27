@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление рассылками</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .schedule-card { transition: all 0.3s ease; }
+        .schedule-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .cron-badge { font-family: monospace; }
+    </style>
+</head>
+<body>
+    <!-- Форма входа -->
+    <div id="loginForm" class="d-flex justify-content-center align-items-center vh-100 d-none">
+        <div class="card shadow" style="width: 400px;">
+            <div class="card-header bg-primary text-white text-center">
+                <h5><i class="bi bi-lock"></i> Вход в админку</h5>
+            </div>
+            <div class="card-body">
+                <form id="login">
+                    <div class="mb-3">
+                        <label class="form-label">Логин</label>
+                        <input type="text" class="form-control" id="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Пароль</label>
+                        <input type="password" class="form-control" id="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-box-arrow-in-right"></i> Войти
+                    </button>
+                </form>
+                <div id="loginError" class="text-danger text-center mt-2 d-none">
+                    Неверный логин или пароль
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Основной интерфейс (скрыт до входа) -->
+    <div id="mainApp" class="d-none">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container">
+                <a class="navbar-brand" href="#">
+                    <i class="bi bi-envelope"></i> Управление рассылками
+                </a>
+                <button class="btn btn-outline-light btn-sm" onclick="logout()">
+                    <i class="bi bi-box-arrow-right"></i> Выход
+                </button>
+            </div>
+        </nav>
+        
+        <div class="container mt-4">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2>Запланированные рассылки</h2>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
+                            <i class="bi bi-plus"></i> Создать рассылку
+                        </button>
+                    </div>
+                    
+                    <div id="schedulesList" class="row">
+                        <div class="col-12 text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Загрузка...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <!-- Справка и логи -->
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <i class="bi bi-info-circle"></i> Справка
+                        </div>
+                        <div class="card-body">
+                            <h6>Формат Cron:</h6>
+                            <small class="text-muted">
+                                <code>минута час день месяца день_недели</code><br>
+                                Пример: <code>0 10 * * 1</code> - каждый понедельник в 10:00
+                            </small>
+                            <hr>
+                            <h6>Специальные символы:</h6>
+                            <small class="text-muted">
+                                * - любое значение<br>
+                                , - перечисление значений<br>
+                                - - диапазон значений<br>
+                                / - шаг значений
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-3">
+                        <div class="card-header bg-warning text-dark">
+                            <i class="bi bi-clock-history"></i> Последние запуски
+                        </div>
+                        <div class="card-body">
+                            <div id="recentLogs">
+                                <small class="text-muted">Загрузка логов...</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Управление админами -->
+                    <div class="card mt-3">
+                        <div class="card-header bg-success text-white">
+                            <i class="bi bi-person-gear"></i> Управление админами
+                        </div>
+                        <div class="card-body">
+                            <button class="btn btn-outline-primary btn-sm w-100 mb-2" data-bs-toggle="modal" data-bs-target="#changeCredentialsModal">
+                                <i class="bi bi-key"></i> Сменить пароль/логин
+                            </button>
+                            <button class="btn btn-outline-success btn-sm w-100" data-bs-toggle="modal" data-bs-target="#createAdminModal">
+                                <i class="bi bi-person-plus"></i> Создать админа
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Модальное окно создания/редактирования рассылки -->
+        <div class="modal fade" id="createModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTitle">Создать рассылку</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="scheduleForm">
+                            <input type="hidden" id="scheduleId">
+                            <div class="mb-3">
+                                <label class="form-label">Название</label>
+                                <input type="text" class="form-control" id="scheduleName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Описание</label>
+                                <textarea class="form-control" id="scheduleDescription" rows="2"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Тип</label>
+                                <select class="form-select" id="scheduleType" onchange="toggleScheduleFields()">
+                                    <option value="cron">Периодическая (cron)</option>
+                                    <option value="date">Однократная</option>
+                                </select>
+                            </div>
+                            <div class="mb-3" id="cronField">
+                                <label class="form-label">Cron выражение</label>
+                                <input type="text" class="form-control" id="cronExpression" placeholder="0 10 * * 1">
+                                <div class="form-text">мин час день месяц день_недели</div>
+                            </div>
+                            <div class="mb-3 d-none" id="dateField">
+                                <label class="form-label">Дата и время</label>
+                                <input type="datetime-local" class="form-control" id="specificDate">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">ID пользователей (через запятую)</label>
+                                <input type="text" class="form-control" id="userIds" placeholder="1,2,3 или оставить пустым для всех">
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="isActive">
+                                <label class="form-check-label">Активна</label>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-primary" onclick="saveSchedule()">Сохранить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно смены пароля/логина -->
+        <div class="modal fade" id="changeCredentialsModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Смена логина/пароля</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="changeCredentialsForm">
+                            <div class="mb-3">
+                                <label class="form-label">Текущий пароль</label>
+                                <input type="password" class="form-control" id="currentPassword" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Новый логин (оставить пустым, если не менять)</label>
+                                <input type="text" class="form-control" id="newUsername">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Новый пароль (оставить пустым, если не менять)</label>
+                                <input type="password" class="form-control" id="newPassword">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-primary" onclick="changeCredentials()">Сохранить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно создания админа -->
+        <div class="modal fade" id="createAdminModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Создать нового админа</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="createAdminForm">
+                            <div class="mb-3">
+                                <label class="form-label">Логин</label>
+                                <input type="text" class="form-control" id="adminUsername" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Пароль</label>
+                                <input type="password" class="form-control" id="adminPassword" required>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-success" onclick="createAdmin()">Создать</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Скрипты -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/admin.js"></script>
+</body>
+</html>

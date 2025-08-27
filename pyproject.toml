@@ -1,0 +1,9 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["-q", "--tb=short"]
+asyncio_default_fixture_loop_scope = "function"
+asyncio_mode = "auto"  # <-- Добавь эту строку
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+

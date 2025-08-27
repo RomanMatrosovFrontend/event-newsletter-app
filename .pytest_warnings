@@ -1,0 +1,3 @@
+ignore::pytest_asyncio.plugin.PytestDeprecationWarning
+ignore::DeprecationWarning
+ignore::MovedIn20Warning

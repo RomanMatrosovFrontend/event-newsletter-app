@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>События на этой неделе</title>
+</head>
+<body>
+    <h2>Приветствуем, {{ user.email }}!</h2>
+    <p>Мы подобрали для вас интересные события:</p>
+    
+    {% for event in events %}
+    <div class="event">
+        <h3>{{ event.title }}</h3>
+        <p>{{ event.description }}</p>
+        <p>Когда: {{ event.dates[0] if event.dates else 'Дата уточняется' }}</p>
+        <a href="{{ event.url }}">Подробнее</a>
+    </div>
+    {% endfor %}
+    
+    <hr>
+    <p>
+        <small>
+            <a href="{{ unsubscribe_url }}">Отписаться от рассылки</a>
+        </small>
+    </p>
+</body>
+</html>
