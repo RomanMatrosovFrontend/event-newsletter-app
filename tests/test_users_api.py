@@ -362,3 +362,56 @@ class TestUsersAPI:
         from datetime import datetime
         created_at = datetime.fromisoformat(data["created_at"].replace('Z', '+00:00'))
         assert created_at is not None
+
+    # PUT /users/email/{email}
+    def test_update_user_by_email_success(self, client, db_session):
+        """PUT /users/email/{email} - успешное обновление по email"""
+        user = User(email="old@example.com")
+        db_session.add(user)
+        db_session.commit()
+        
+        update_data = {
+            "new_email": "new@example.com",
+            "categories": ["tech", "music"]
+        }
+        
+        response = client.put("/users/email/old@example.com", json=update_data)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["email"] == "new@example.com"
+        assert "tech" in data["categories"]
+
+    def test_update_user_by_email_not_found(self, client):
+        """PUT /users/email/{email} - пользователь не найден"""
+        update_data = {"new_email": "new@example.com"}
+        
+        response = client.put("/users/email/notfound@example.com", json=update_data)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_update_user_by_email_duplicate_new_email(self, client, db_session):
+        """PUT /users/email/{email} - новый email уже занят"""
+        user1 = User(email="user1@example.com")
+        user2 = User(email="user2@example.com")
+        db_session.add_all([user1, user2])
+        db_session.commit()
+        
+        update_data = {"new_email": "user2@example.com"}
+        
+        response = client.put("/users/email/user1@example.com", json=update_data)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "Email already registered" in response.json()["detail"]
+
+    def test_update_user_categories_only_by_email(self, client, db_session):
+        """PUT /users/email/{email} - обновление только категорий"""
+        user = User(email="categories@example.com")
+        db_session.add(user)
+        db_session.commit()
+        
+        update_data = {"categories": ["sports", "culture"]}
+        
+        response = client.put("/users/email/categories@example.com", json=update_data)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["email"] == "categories@example.com"  # не изменился
+        assert "sports" in data["categories"]
+

@@ -13,6 +13,11 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     categories: Optional[List[str]] = None
 
+# Для обновления профиля пользователя по email
+class UserEmailUpdate(BaseModel):
+    new_email: Optional[EmailStr] = None
+    categories: Optional[List[str]] = None
+
 class User(UserBase):
     id: int
     created_at: datetime
@@ -66,6 +71,9 @@ class SubscribeResponse(BaseModel):
     status: str
     message: Optional[str] = None
 
+# Для отписки по email
+class UnsubscribeRequest(BaseModel):
+    email: EmailStr
 
 class ScheduleBase(BaseModel):
     name: str
@@ -129,3 +137,4 @@ class Token(BaseModel):
     
 class Message(BaseModel):
     message: str
+

@@ -20,3 +20,18 @@ async def unsubscribe_user(user_id: int, db: Session = Depends(get_db)):
     db.commit()
     
     return {"message": "You have been successfully unsubscribed from all newsletters"}
+
+@router.post("/", response_model=schemas.Message)
+async def unsubscribe_by_email(
+    email_data: schemas.UnsubscribeRequest,  # {"email": "user@example.com"}
+    db: Session = Depends(get_db)
+):
+    """Отписка по email"""
+    user = db.query(models.User).filter(models.User.email == email_data.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user.is_subscribed = False
+    db.commit()
+    return {"message": "Successfully unsubscribed"}
+

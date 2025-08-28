@@ -184,6 +184,66 @@ def update_user(user_id: int, user: schemas.UserUpdate, db: Session = Depends(ge
         updated_at=db_user.updated_at
     )
 
+# UPDATE BY EMAIL - Обновление пользователя по email  
+@router.put("/email/{email}", response_model=schemas.User)
+def update_user_by_email(
+    email: str, 
+    user_data: schemas.UserEmailUpdate, 
+    db: Session = Depends(get_db)
+):
+    """
+    Обновляет пользователя по email (смена email и/или категорий).
+    """
+    db_user = db.query(models.User).filter(models.User.email == email).first()
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Обновляем email если передан новый
+    if user_data.new_email is not None:
+        # Проверяем, не занят ли новый email другим пользователем
+        existing_user = db.query(models.User).filter(
+            models.User.email == user_data.new_email,
+            models.User.id != db_user.id
+        ).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        
+        db_user.email = user_data.new_email
+
+    # Обновляем категории если переданы
+    if user_data.categories is not None:
+        # Удаляем старые категории
+        delete_stmt = models.user_categories.delete().where(
+            models.user_categories.c.user_id == db_user.id
+        )
+        db.execute(delete_stmt)
+        
+        # Добавляем новые категории
+        for category in user_data.categories:
+            insert_stmt = models.user_categories.insert().values(
+                user_id=db_user.id,
+                category=category.strip()
+            )
+            db.execute(insert_stmt)
+
+    db.commit()
+    db.refresh(db_user)
+
+    # Получаем обновленные категории для ответа
+    categories_stmt = models.user_categories.select().where(
+        models.user_categories.c.user_id == db_user.id
+    )
+    categories_result = db.execute(categories_stmt).fetchall()
+    categories = [row.category for row in categories_result]
+
+    return schemas.User(
+        id=db_user.id,
+        email=db_user.email,
+        categories=categories,
+        created_at=db_user.created_at,
+        updated_at=db_user.updated_at
+    )
+
 # DELETE - Удаление пользователя
 @router.delete("/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db)):
