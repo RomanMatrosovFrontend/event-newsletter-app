@@ -1,4 +1,4 @@
-const API_BASE = 'http://' + window.location.hostname + ':8000';
+const API_BASE = window.location.protocol + '//' + window.location.host;
 
 // Единый обработчик DOM
 document.addEventListener('DOMContentLoaded', async () => {
