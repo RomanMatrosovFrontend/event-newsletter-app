@@ -1,18 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request, Response, Form
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from typing import Dict, List
 from app import models, schemas
 from app.core.auth import create_access_token, get_current_admin
 from app.database import get_db
 from app.models import AdminUser
-from app.schemas import AdminUserCreate, ChangeCredentialsRequest, Token
+from app.schemas import AdminUserCreate, ChangeCredentialsRequest, EventCountResponse, Token
 from app.services.email_service import send_email_via_postmark
 from app.utils.event_matcher import get_events_for_user
 import logging
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["admin"])
+templates = Jinja2Templates(directory="app/templates")
 
 def generate_newsletter_html(events: list, user: models.User) -> str:
     events_html = ""
@@ -84,14 +86,10 @@ def generate_newsletter_text(events: list, user: models.User) -> str:
     
     return f"""
 Привет, {user.email}!
-
 Мы подобрали для вас события по вашим интересам:
-
 {events_text if events_text else 'На этой неделе нет подходящих событий. Но мы сообщим, когда появятся новые!'}
-
 С уважением,
 Команда Event Newsletter
-
 Отписаться от рассылки: https://your-site.com/unsubscribe?email={user.email}
 """
 
@@ -125,6 +123,14 @@ async def send_newsletter_to_user(user_id: int):
         
     except Exception as e:
         logger.error(f"Error sending newsletter to user {user_id}: {str(e)}")
+
+@router.get("/events-manager", response_class=HTMLResponse)
+async def events_manager_page(
+    request: Request,
+    current_admin: AdminUser = Depends(get_current_admin)
+):
+    """Страница управления событиями для админов"""
+    return templates.TemplateResponse("events-manager.html", {"request": request})
 
 @router.post("/newsletter/", response_model=Dict)
 async def send_newsletter_to_all_users(
@@ -240,4 +246,10 @@ async def create_admin(
     db.commit()
     
     return {"status": "success", "message": f"Admin {request.username} created"}
+
+@router.get("/count", response_model=EventCountResponse)
+async def get_events_count(db: Session = Depends(get_db)) -> EventCountResponse:
+    """Получение общего количества событий"""
+    count = db.query(models.Event).count()
+    return EventCountResponse(count=count)
 

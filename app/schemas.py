@@ -141,3 +141,6 @@ class Token(BaseModel):
 class Message(BaseModel):
     message: str
 
+class EventCountResponse(BaseModel):
+    count: int
+

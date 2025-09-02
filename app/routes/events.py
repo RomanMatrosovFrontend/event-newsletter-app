@@ -97,6 +97,12 @@ async def upload_csv(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
+@router.get("/count", response_model=schemas.EventCountResponse)
+async def get_events_count(db: Session = Depends(get_db)) -> schemas.EventCountResponse:
+    """Получение общего количества событий"""
+    count = db.query(models.Event).count()
+    return schemas.EventCountResponse(count=count)
+
 @router.get("/user/{user_id}/recommended", response_model=List[schemas.Event])
 def get_recommended_events(user_id: int, db: Session = Depends(get_db)):
     """
@@ -186,3 +192,4 @@ def delete_event(event_id: int, db: Session = Depends(get_db)):
     db.delete(db_event)
     db.commit()
     return {"message": "Event deleted successfully"}
+

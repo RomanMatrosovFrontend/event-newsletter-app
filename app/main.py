@@ -1,11 +1,14 @@
 import os
 from fastapi import Depends, FastAPI, Request
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from app import models
 from app.core.auth import get_current_admin
 from app.database import engine, Base, get_db
-from app import models
 from app.services.advanced_scheduler import init_scheduler
 from app.models import AdminUser
 
@@ -60,6 +63,24 @@ async def startup_event():
         print("✅ Admin user created")
     db.close()
 
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """
+    Обработка HTTP ошибок с перенаправлением на админку при проблемах с аутентификацией
+    """
+    # Проверяем если это ошибка аутентификации
+    if (exc.status_code == 401 or 
+        exc.detail == "Invalid token" or 
+        "token" in str(exc.detail).lower() or
+        "unauthorized" in str(exc.detail).lower()):
+        
+        # Если запрос пришел от браузера (не API), перенаправляем
+        accept_header = request.headers.get("accept", "")
+        if "text/html" in accept_header:
+            return RedirectResponse(url="/admin", status_code=302)
+    
+    # Для всех остальных ошибок используем стандартный обработчик
+    return await http_exception_handler(request, exc)
 
 if __name__ == "__main__":
     import uvicorn

@@ -471,3 +471,68 @@ function showSuccess(message) {
          setTimeout(() => successDiv.innerHTML = '', 3000);
      }
 }
+
+async function uploadCSV() {
+    const fileInput = document.getElementById('csvFile');
+    const spinner = document.getElementById('uploadSpinner');
+    const resultsDiv = document.getElementById('csvResults');
+    const resultsContent = document.getElementById('csvResultsContent');
+    
+    if (!fileInput.files[0]) {
+        alert('Выберите CSV файл');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    
+    spinner.classList.remove('d-none');
+    
+    try {
+        const response = await fetch(`${API_BASE}/events/upload-csv/`, {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            resultsContent.innerHTML = `
+                <div class="alert alert-success">
+                    <strong>Обработано строк:</strong> ${result.results.total_rows}<br>
+                    <strong>Успешно загружено:</strong> ${result.results.successful} событий<br>
+                    <strong>Пропущено:</strong> ${result.results.failed} строк
+                </div>
+                ${result.results.errors.length > 0 ? `
+                    <div class="alert alert-warning">
+                        <strong>Ошибки (${result.results.errors.length}):</strong>
+                        <ul class="mb-0 small">
+                            ${result.results.errors.slice(0, 5).map(err => `<li>${err}</li>`).join('')}
+                            ${result.results.errors.length > 5 ? '<li><em>... и другие</em></li>' : ''}
+                        </ul>
+                    </div>
+                ` : ''}
+            `;
+        } else {
+            resultsContent.innerHTML = `
+                <div class="alert alert-danger">
+                    Ошибка загрузки: ${result.detail || 'Неизвестная ошибка'}
+                </div>
+            `;
+        }
+        
+        resultsDiv.style.display = 'block';
+        fileInput.value = '';
+        
+    } catch (error) {
+        resultsContent.innerHTML = `
+            <div class="alert alert-danger">
+                Ошибка: ${error.message}
+            </div>
+        `;
+        resultsDiv.style.display = 'block';
+    } finally {
+        spinner.classList.add('d-none');
+    }
+}
