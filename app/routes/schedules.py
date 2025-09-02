@@ -10,7 +10,25 @@ router = APIRouter(tags=["schedules"])
 @router.get("/", response_model=List[schemas.Schedule])
 def get_schedules(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     schedules = db.query(models.NewsletterSchedule).offset(skip).limit(limit).all()
-    return schedules
+    
+    result = []
+    for schedule in schedules:
+        schedule_data = schedule.__dict__.copy()
+        
+        # ДОБАВЬ ЭТИ СТРОКИ ДЛЯ ДИАГНОСТИКИ:
+        job_id = f"schedule_{schedule.id}"
+        job = scheduler.get_job(job_id)
+        
+        print(f"Schedule ID: {schedule.id}")
+        print(f"Job ID: {job_id}")
+        print(f"Job exists: {job is not None}")
+        if job:
+            print(f"Next run time: {job.next_run_time}")
+        
+        schedule_data["next_run_time"] = job.next_run_time if job else None
+        result.append(schedule_data)
+    
+    return result
 
 @router.get("/{schedule_id}", response_model=schemas.Schedule)
 def get_schedule(schedule_id: int, db: Session = Depends(get_db)):
@@ -47,16 +65,22 @@ def update_schedule(schedule_id: int, schedule_data: schemas.ScheduleUpdate, db:
     schedule = db.query(models.NewsletterSchedule).filter(
         models.NewsletterSchedule.id == schedule_id
     ).first()
+
     if not schedule:
         raise HTTPException(status_code=404, detail="Schedule not found")
-    
+
     update_data = schedule_data.dict(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(schedule, field, value)
     
+    if 'name' in update_data and update_data['name'] is None:
+        update_data.pop('name')
+    
+    for field, value in update_data.items():
+        if value is not None:  # Добавляем проверку на None
+            setattr(schedule, field, value)
+
     db.commit()
     db.refresh(schedule)
-    
+
     # Обновляем задачу в планировщике
     job_id = f"schedule_{schedule.id}"
     if scheduler.get_job(job_id):
@@ -64,7 +88,7 @@ def update_schedule(schedule_id: int, schedule_data: schemas.ScheduleUpdate, db:
     
     if schedule.is_active:
         schedule_job(schedule, db)
-    
+
     return schedule
 
 @router.delete("/{schedule_id}")

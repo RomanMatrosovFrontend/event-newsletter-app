@@ -63,6 +63,9 @@
                         </button>
                     </div>
                     
+                    <div id="errorMessages"></div>
+		    <div id="successMessages"></div>
+		    
                     <div id="schedulesList" class="row">
                         <div class="col-12 text-center">
                             <div class="spinner-border text-primary" role="status">
@@ -125,57 +128,58 @@
         </div>
         
         <!-- Модальное окно создания/редактирования рассылки -->
-        <div class="modal fade" id="createModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="modalTitle">Создать рассылку</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="scheduleForm">
-                            <input type="hidden" id="scheduleId">
-                            <div class="mb-3">
-                                <label class="form-label">Название</label>
-                                <input type="text" class="form-control" id="scheduleName" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Описание</label>
-                                <textarea class="form-control" id="scheduleDescription" rows="2"></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Тип</label>
-                                <select class="form-select" id="scheduleType" onchange="toggleScheduleFields()">
-                                    <option value="cron">Периодическая (cron)</option>
-                                    <option value="date">Однократная</option>
-                                </select>
-                            </div>
-                            <div class="mb-3" id="cronField">
-                                <label class="form-label">Cron выражение</label>
-                                <input type="text" class="form-control" id="cronExpression" placeholder="0 10 * * 1">
-                                <div class="form-text">мин час день месяц день_недели</div>
-                            </div>
-                            <div class="mb-3 d-none" id="dateField">
-                                <label class="form-label">Дата и время</label>
-                                <input type="datetime-local" class="form-control" id="specificDate">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">ID пользователей (через запятую)</label>
-                                <input type="text" class="form-control" id="userIds" placeholder="1,2,3 или оставить пустым для всех">
-                            </div>
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" type="checkbox" id="isActive">
-                                <label class="form-check-label">Активна</label>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                        <button type="button" class="btn btn-primary" onclick="saveSchedule()">Сохранить</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+	<div class="modal fade" id="createModal" tabindex="-1">
+	    <div class="modal-dialog">
+		<div class="modal-content">
+		    <div class="modal-header">
+		        <h5 class="modal-title" id="modalTitle">Создать рассылку</h5>
+		        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+		    </div>
+		    <div class="modal-body">
+		        <form id="scheduleForm">
+		            <input type="hidden" id="scheduleId" name="schedule_id">
+		            <div class="mb-3">
+		                <label class="form-label">Название</label>
+		                <input type="text" class="form-control" id="scheduleName" name="name" required>
+		            </div>
+		            <div class="mb-3">
+		                <label class="form-label">Описание</label>
+		                <textarea class="form-control" id="scheduleDescription" name="description" rows="2"></textarea>
+		            </div>
+		            <div class="mb-3">
+		                <label class="form-label">Тип</label>
+		                <select class="form-select" id="scheduleType" name="schedule_type" onchange="toggleScheduleFields()">
+		                    <option value="cron">Периодическая (cron)</option>
+		                    <option value="date">Однократная</option>
+		                </select>
+		            </div>
+		            <div class="mb-3" id="cronField">
+		                <label class="form-label">Cron выражение</label>
+		                <input type="text" class="form-control" id="cronExpression" name="cron_expression" placeholder="0 10 * * 1">
+		                <div class="form-text" id="cronHint">ℹ️ Время указывается в часовом поясе UTC (+0)</div>
+		            </div>
+		            <div class="mb-3 d-none" id="dateField">
+		                <label class="form-label">Дата и время</label>
+		                <input type="datetime-local" class="form-control" id="specificDate" name="specific_date">
+		                <div class="form-text" id="dateHint">ℹ️ Время указывается в вашем часовом поясе UTC (+0)</div>
+		            </div>
+		            <div class="mb-3">
+		                <label class="form-label">ID пользователей (через запятую)</label>
+		                <input type="text" class="form-control" id="userIds" name="user_ids" placeholder="1,2,3 или оставить пустым для всех">
+		            </div>
+		            <div class="form-check mb-3">
+		                <input class="form-check-input" type="checkbox" id="isActive" name="is_active" checked>
+		                <label class="form-check-label">Активна</label>
+		            </div>
+		        </form>
+		    </div>
+		    <div class="modal-footer">
+		        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+		        <button type="button" class="btn btn-primary" onclick="saveSchedule()">Сохранить</button>
+		    </div>
+		</div>
+	    </div>
+	</div>
 
         <!-- Модальное окно смены пароля/логина -->
         <div class="modal fade" id="changeCredentialsModal" tabindex="-1">

@@ -83,6 +83,7 @@ class ScheduleBase(BaseModel):
     cron_expression: Optional[str] = None
     specific_date: Optional[datetime] = None
     is_active: bool = True
+    admin_timezone: Optional[str] = "UTC"
 
 class ScheduleCreate(ScheduleBase):
     pass
@@ -95,11 +96,13 @@ class ScheduleUpdate(BaseModel):
     cron_expression: Optional[str] = None
     specific_date: Optional[datetime] = None
     is_active: Optional[bool] = None
+    admin_timezone: Optional[str] = None
 
 class Schedule(ScheduleBase):
     id: int
     last_run: Optional[datetime] = None
     created_at: datetime
+    next_run_time: Optional[datetime] = None
 
     class Config:
         from_attributes = True

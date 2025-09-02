@@ -1,7 +1,13 @@
 const API_BASE = window.location.protocol + '//' + window.location.host;
 
+let adminTimezone = '';
+let adminTimezoneOffset = '';
+
 // Единый обработчик DOM
 document.addEventListener('DOMContentLoaded', async () => {
+    // Определяем часовой пояс админа
+    detectAdminTimezone();
+    
     const isLoggedIn = await checkAuth();
     if (!isLoggedIn) {
         showLogin();
@@ -11,7 +17,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadRecentLogs();
     }
 
-    // Сброс формы при открытии модального окна
     const modal = document.getElementById('createModal');
     if (modal) {
         modal.addEventListener('show.bs.modal', function () {
@@ -22,6 +27,41 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 });
+
+// Определение часового пояса админа
+function detectAdminTimezone() {
+    try {
+        adminTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const now = new Date();
+        const offsetMinutes = -now.getTimezoneOffset();
+        const offsetHours = offsetMinutes / 60;
+        adminTimezoneOffset = offsetHours >= 0 ? `+${offsetHours}` : `${offsetHours}`;
+        
+        console.log(`Admin timezone: ${adminTimezone} (UTC${adminTimezoneOffset})`);
+        updateTimezoneHints();
+        
+    } catch (error) {
+        console.error('Ошибка определения часового пояса:', error);
+        adminTimezone = 'UTC';
+        adminTimezoneOffset = '+0';
+    }
+}
+
+// Обновление подсказок о часовом поясе в форме
+function updateTimezoneHints() {
+    // Подсказка для cron
+    const cronHint = document.getElementById('cronHint');
+    if (cronHint) {
+        cronHint.innerHTML = `ℹ️ Время указывается в часовом поясе ${adminTimezone} (UTC${adminTimezoneOffset})`;
+    }
+    
+    // Подсказка для даты
+    const dateHint = document.getElementById('dateHint');
+    if (dateHint) {
+        dateHint.innerHTML = `ℹ️ Время указывается в вашем часовом поясе ${adminTimezone} (UTC${adminTimezoneOffset})`;
+    }
+}
+
 
 async function checkAuth() {
     try {
@@ -110,74 +150,63 @@ function renderSchedules(schedules) {
     const container = document.getElementById('schedulesList');
     
     if (schedules.length === 0) {
-        container.innerHTML = `
-            <div class="col-12">
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i> Нет созданных рассылок
-                </div>
-            </div>
-        `;
+        container.innerHTML = '<div class="text-center text-muted py-4">Нет созданных рассылок</div>';
         return;
     }
 
-    container.innerHTML = schedules.map(schedule => `
-        <div class="col-md-6 mb-3">
-            <div class="card schedule-card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0">${schedule.name}</h6>
-                    <span class="badge ${schedule.is_active ? 'bg-success' : 'bg-secondary'}">
-                        ${schedule.is_active ? 'Активно' : 'Неактивно'}
-                    </span>
-                </div>
+    container.innerHTML = schedules.map(schedule => {
+        const nextRunTime = schedule.next_run_time || 'Не запланировано';
+        const lastRunTime = schedule.last_run || 'Никогда';
+
+        return `
+            <div class="card mb-3">
                 <div class="card-body">
-                    ${schedule.description ? `<p class="card-text">${schedule.description}</p>` : ''}
-                    
-                    <div class="mb-2">
-                        <strong>Тип:</strong> 
-                        ${schedule.schedule_type === 'cron' ? 'Периодическая' : 'Однократная'}
-                    </div>
-                    
-                    ${schedule.schedule_type === 'cron' ? `
-                        <div class="mb-2">
-                            <strong>Cron:</strong> 
-                            <span class="badge bg-primary cron-badge">${schedule.cron_expression}</span>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="card-title">${schedule.name}</h5>
+                            ${schedule.description ? `<p class="card-text text-muted">${schedule.description}</p>` : ''}
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small class="text-muted">
+                                        <strong>Расписание:</strong> 
+                                        ${schedule.schedule_type === 'cron' ? 
+                                            `Cron: ${schedule.cron_expression}` : 
+                                            `Однократно: ${schedule.specific_date}`}
+                                        (${schedule.admin_timezone || 'UTC'})
+                                    </small>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted">
+                                        <strong>Следующий запуск:</strong> ${nextRunTime}
+                                    </small><br>
+                                    <small class="text-muted">
+                                        <strong>Последний запуск:</strong> ${lastRunTime}
+                                    </small>
+                                </div>
+                            </div>
                         </div>
-                    ` : `
-                        <div class="mb-2">
-                            <strong>Дата:</strong> 
-                            ${new Date(schedule.specific_date).toLocaleString('ru-RU')}
+                        
+                        <div class="btn-group-vertical">
+                            <button class="btn btn-sm ${schedule.is_active ? 'btn-success' : 'btn-secondary'}" 
+                                    onclick="toggleSchedule(${schedule.id}, ${!schedule.is_active})">
+                                ${schedule.is_active ? 'Активна' : 'Неактивна'}
+                            </button>
+                            <button class="btn btn-sm btn-primary" onclick="runScheduleNow(${schedule.id})">
+                                Запустить
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editSchedule(${schedule.id})">
+                                Изменить
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSchedule(${schedule.id})">
+                                Удалить
+                            </button>
                         </div>
-                    `}
-                    
-                    ${schedule.user_ids && schedule.user_ids.length > 0 ? `
-                        <div class="mb-2">
-                            <strong>Пользователи:</strong> 
-                            <span class="badge bg-info">${schedule.user_ids.join(', ')}</span>
-                        </div>
-                    ` : ''}
-                    
-                    ${schedule.last_run ? `
-                        <div class="mb-2">
-                            <strong>Последний запуск:</strong> 
-                            ${new Date(schedule.last_run).toLocaleString('ru-RU')}
-                        </div>
-                    ` : ''}
-                    
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary" onclick="editSchedule(${schedule.id})">
-                            <i class="bi bi-pencil"></i> Изменить
-                        </button>
-                        <button class="btn btn-outline-success" onclick="runSchedule(${schedule.id})">
-                            <i class="bi bi-play"></i> Запустить
-                        </button>
-                        <button class="btn btn-outline-danger" onclick="deleteSchedule(${schedule.id})">
-                            <i class="bi bi-trash"></i> Удалить
-                        </button>
                     </div>
                 </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 // Загрузка последних логов
@@ -253,41 +282,55 @@ async function editSchedule(id) {
 
 // Сохранение рассылки
 async function saveSchedule() {
-    const formData = {
-        name: document.getElementById('scheduleName').value,
-        description: document.getElementById('scheduleDescription').value,
-        schedule_type: document.getElementById('scheduleType').value,
-        cron_expression: document.getElementById('cronExpression').value || null,
-        specific_date: document.getElementById('specificDate').value || null,
-        user_ids: document.getElementById('userIds').value 
-            ? document.getElementById('userIds').value.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id))
-            : null,
-        is_active: document.getElementById('isActive').checked
+    const formData = new FormData(document.getElementById('scheduleForm'));
+    
+    const scheduleData = {
+        name: formData.get('name'),
+        description: formData.get('description'),
+        schedule_type: formData.get('schedule_type'),
+        cron_expression: formData.get('cron_expression') || null,
+        specific_date: formData.get('specific_date') || null,
+        is_active: formData.get('is_active') === 'on',
+        admin_timezone: adminTimezone // ДОБАВЛЯЕМ ЧАСОВОЙ ПОЯС
     };
 
-    const id = document.getElementById('scheduleId').value;
-    const url = id ? `${API_BASE}/schedules/${id}` : `${API_BASE}/schedules/`;
-    const method = id ? 'PUT' : 'POST';
+    // Обработка пользователей
+    const userIdsInput = formData.get('user_ids');
+    if (userIdsInput && userIdsInput.trim()) {
+        try {
+            scheduleData.user_ids = userIdsInput.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+        } catch (error) {
+            showError('Неверный формат списка пользователей');
+            return;
+        }
+    }
+    
+    console.log('Отправляемые данные:', JSON.stringify(scheduleData, null, 2));
+    const scheduleId = document.getElementById('scheduleId').value;
 
     try {
+        const url = scheduleId ? 
+            `${API_BASE}/schedules/${scheduleId}` : 
+            `${API_BASE}/schedules/`;
+        
+        const method = scheduleId ? 'PUT' : 'POST';
+
         const response = await fetch(url, {
             method: method,
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(scheduleData)
         });
 
         if (response.ok) {
             bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
             loadSchedules();
-            alert(id ? 'Рассылка обновлена!' : 'Рассылка создана!');
+            showSuccess(scheduleId ? 'Рассылка обновлена!' : 'Рассылка создана!');
         } else {
-            alert('Ошибка сохранения: ' + response.statusText);
+            const error = await response.json();
+            showError(error.detail || 'Ошибка сохранения');
         }
     } catch (error) {
-        alert('Ошибка сети: ' + error.message);
+        showError('Ошибка: ' + error.message);
     }
 }
 
@@ -406,3 +449,25 @@ async function createAdmin() {
     }
 }
 
+function showError(message) {
+    // Можно использовать alert или создать красивое уведомление
+    //alert('Ошибка: ' + message);
+    
+    // Или создать элемент для уведомлений:
+     const errorDiv = document.getElementById('errorMessages');
+     if (errorDiv) {
+         errorDiv.innerHTML = `<div class="alert alert-danger">${message}</div>`;
+         setTimeout(() => errorDiv.innerHTML = '', 5000);
+     }
+}
+
+function showSuccess(message) {
+    alert('Успех: ' + message);
+    
+    // Или аналогично для успешных сообщений:
+     const successDiv = document.getElementById('successMessages');
+     if (successDiv) {
+         successDiv.innerHTML = `<div class="alert alert-success">${message}</div>`;
+         setTimeout(() => successDiv.innerHTML = '', 3000);
+     }
+}

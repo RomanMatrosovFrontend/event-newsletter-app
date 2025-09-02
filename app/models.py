@@ -74,6 +74,8 @@ class NewsletterSchedule(Base):
     is_active = Column(Boolean, default=True)
     last_run = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    admin_timezone = Column(String, nullable=True, default="UTC")
     
     # Связь с логами (опционально)
     logs = relationship("NewsletterLog", back_populates="schedule")

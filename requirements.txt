@@ -12,5 +12,6 @@ pytest>=7.0.0
 pytest-asyncio
 pydantic[email]>=2.0.0
 python-dotenv
+pytz
 jinja2
 PyJWT

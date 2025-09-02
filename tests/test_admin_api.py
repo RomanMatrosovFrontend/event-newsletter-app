@@ -116,6 +116,7 @@ class TestAdminAPI:
         assert response.status_code in [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
     
     # Исправленный тест для send_newsletter_to_user
+    @patch('app.routes.admin.get_db')
     @patch('app.routes.admin.send_email_via_postmark')
     @patch('app.routes.admin.get_events_for_user')
     @patch('app.routes.admin.get_db')
