@@ -148,16 +148,24 @@ async function loadSchedules() {
 // Отображение рассылок
 function renderSchedules(schedules) {
     const container = document.getElementById('schedulesList');
-    
     if (schedules.length === 0) {
         container.innerHTML = '<div class="text-center text-muted py-4">Нет созданных рассылок</div>';
         return;
     }
-
     container.innerHTML = schedules.map(schedule => {
-        const nextRunTime = schedule.next_run_time || 'Не запланировано';
-        const lastRunTime = schedule.last_run || 'Никогда';
-
+        const nextRunTime = schedule.next_run_time ? new Date(schedule.next_run_time).toLocaleString('ru-RU') : 'Не запланировано';
+        const lastRunTime = schedule.last_run ? new Date(schedule.last_run).toLocaleString('ru-RU') : 'Никогда';
+        const periodicity = schedule.schedule_config?.periodicity || '';
+        let scheduleDisplay = '';
+        if (periodicity === 'weekly') {
+            scheduleDisplay = 'Еженедельно';
+        } else if (periodicity === 'interval') {
+            scheduleDisplay = `Интервал раз в ${schedule.schedule_config.days_interval} дней`;
+        } else if (periodicity === 'single') {
+            const datetime = schedule.schedule_config.datetime || 'не указано';
+            const dtFormatted = datetime !== 'не указано' ? new Date(datetime).toLocaleString('ru-RU') : datetime;
+            scheduleDisplay = 'Однократно: ' + dtFormatted;
+        }
         return `
             <div class="card mb-3">
                 <div class="card-body">
@@ -165,15 +173,10 @@ function renderSchedules(schedules) {
                         <div>
                             <h5 class="card-title">${schedule.name}</h5>
                             ${schedule.description ? `<p class="card-text text-muted">${schedule.description}</p>` : ''}
-                            
                             <div class="row">
                                 <div class="col-md-6">
                                     <small class="text-muted">
-                                        <strong>Расписание:</strong> 
-                                        ${schedule.schedule_type === 'cron' ? 
-                                            `Cron: ${schedule.cron_expression}` : 
-                                            `Однократно: ${schedule.specific_date}`}
-                                        (${schedule.admin_timezone || 'UTC'})
+                                        <strong>Расписание:</strong> ${scheduleDisplay} (${schedule.admin_timezone || 'UTC'})
                                     </small>
                                 </div>
                                 <div class="col-md-6">
@@ -186,13 +189,12 @@ function renderSchedules(schedules) {
                                 </div>
                             </div>
                         </div>
-                        
                         <div class="btn-group-vertical">
                             <button class="btn btn-sm ${schedule.is_active ? 'btn-success' : 'btn-secondary'}" 
                                     onclick="toggleSchedule(${schedule.id}, ${!schedule.is_active})">
                                 ${schedule.is_active ? 'Активна' : 'Неактивна'}
                             </button>
-                            <button class="btn btn-sm btn-primary" onclick="runScheduleNow(${schedule.id})">
+                            <button class="btn btn-sm btn-primary" onclick="runSchedule(${schedule.id})">
                                 Запустить
                             </button>
                             <button class="btn btn-sm btn-outline-primary" onclick="editSchedule(${schedule.id})">
@@ -243,42 +245,32 @@ function renderRecentLogs(logs) {
 
 // Переключение полей в форме
 function toggleScheduleFields() {
-    const type = document.getElementById('scheduleType').value;
-    document.getElementById('cronField').classList.toggle('d-none', type !== 'cron');
-    document.getElementById('dateField').classList.toggle('d-none', type !== 'date');
-}
-
-// Редактирование рассылки
-async function editSchedule(id) {
-    try {
-        const response = await fetch(`${API_BASE}/schedules/${id}`);
-        const schedule = await response.json();
-
-        // Открываем модалку
-        const modal = new bootstrap.Modal('#createModal');
-        modal.show();
-
-        // Ждём, когда модалка полностью появится
-        document.getElementById('createModal').addEventListener('shown.bs.modal', function () {
-            // Теперь безопасно заполняем
-            document.getElementById('modalTitle').textContent = 'Редактировать рассылку';
-            document.getElementById('scheduleId').value = schedule.id;
-            document.getElementById('scheduleName').value = schedule.name;
-            document.getElementById('scheduleDescription').value = schedule.description || '';
-            document.getElementById('scheduleType').value = schedule.schedule_type;
-            document.getElementById('cronExpression').value = schedule.cron_expression || '';
-            document.getElementById('specificDate').value = schedule.specific_date ? schedule.specific_date.slice(0, 16) : '';
-            document.getElementById('userIds').value = schedule.user_ids ? schedule.user_ids.join(',') : '';
-            document.getElementById('isActive').checked = schedule.is_active;
-
-            // Обновляем видимость полей
-            toggleScheduleFields();
-        }, { once: true });
-
-    } catch (error) {
-        alert('Ошибка загрузки данных рассылки');
+    const periodicitySelect = document.getElementById('schedulePeriodicity');
+    if (!periodicitySelect) {
+        console.error('Element #schedulePeriodicity not found!');
+        return;
     }
+    const periodicity = periodicitySelect.value;
+    document.getElementById('weeklyFields').classList.toggle('d-none', periodicity !== 'weekly');
+    document.getElementById('intervalFields').classList.toggle('d-none', periodicity !== 'interval');
+    document.getElementById('singleFields').classList.toggle('d-none', periodicity !== 'single');
 }
+
+// Вешаем обработчики на появление модального окна и изменение select
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('createModal');
+    if (modal) {
+        modal.addEventListener('shown.bs.modal', function() {
+            toggleScheduleFields();  // вызываем при появлении формы
+        });
+
+        // Вешаем обработчик на изменение типа рассылки
+        const periodicitySelect = document.getElementById('schedulePeriodicity');
+        if (periodicitySelect) {
+            periodicitySelect.addEventListener('change', toggleScheduleFields);
+        }
+    }
+});
 
 // Сохранение рассылки
 async function saveSchedule() {
@@ -293,9 +285,10 @@ async function saveSchedule() {
 
     if (periodicity === 'weekly') {
         const days = [];
-        document.querySelectorAll('.weekday:checked').forEach(cb => {
-            days.push(parseInt(cb.value));
-        });
+	    const weekdaysSelect = document.getElementById('weekdays');
+	    for (let option of weekdaysSelect.selectedOptions) {
+	        days.push(parseInt(option.value));
+	    }
         scheduleConfig.days = days;
         scheduleConfig.hour = parseInt(document.getElementById('weeklyHour').value);
         scheduleConfig.minute = parseInt(document.getElementById('weeklyMinute').value);
@@ -461,6 +454,55 @@ async function createAdmin() {
         }
     } catch (error) {
         alert('Ошибка соединения');
+    }
+}
+
+async function editSchedule(id) {
+    try {
+        const response = await fetch(`${API_BASE}/schedules/${id}`);
+        const schedule = await response.json();
+        const modal = new bootstrap.Modal('#createModal');
+        modal.show();
+        document.getElementById('createModal').addEventListener('shown.bs.modal', function () {
+            // Базовые данные
+            document.getElementById('modalTitle').textContent = 'Редактировать рассылку';
+            document.getElementById('scheduleId').value = schedule.id;
+            document.getElementById('scheduleName').value = schedule.name;
+            document.getElementById('scheduleDescription').value = schedule.description || '';
+            document.getElementById('schedulePeriodicity').value = schedule.schedule_config.periodicity || 'weekly';
+            document.getElementById('userIds').value = schedule.user_ids ? schedule.user_ids.join(',') : '';
+            document.getElementById('isActive').checked = schedule.is_active;
+
+            // Заполняем дни недели и время для еженедельной рассылки
+            const selectedDaysRaw = schedule.schedule_config.days || [];
+            const selectedDays = selectedDaysRaw.map(d => parseInt(d));
+            const weekdaysSelect = document.getElementById('weekdays');
+            for (let option of weekdaysSelect.options) {
+                const optionVal = parseInt(option.value);
+                option.selected = selectedDays.includes(optionVal);
+                console.log(`Day option: ${optionVal}, selected: ${option.selected}`);
+            }
+            document.getElementById('weeklyHour').value = schedule.schedule_config.hour || 12;
+            document.getElementById('weeklyMinute').value = schedule.schedule_config.minute || 0;
+
+            // Заполняем интервальную рассылку
+            if (schedule.schedule_config.periodicity === 'interval') {
+                document.getElementById('intervalStartDate').value = schedule.schedule_config.start_date || '';
+                document.getElementById('intervalDays').value = schedule.schedule_config.days_interval || 1;
+                document.getElementById('intervalHour').value = schedule.schedule_config.hour || 11;
+                document.getElementById('intervalMinute').value = schedule.schedule_config.minute || 0;
+            }
+
+            // Заполняем однократную рассылку
+            if (schedule.schedule_config.periodicity === 'single') {
+                document.getElementById('singleDatetime').value = schedule.schedule_config.datetime || '';
+            }
+
+            // Переключаем видимость блоков
+            toggleScheduleFields();
+        }, { once: true });
+    } catch (error) {
+        alert('Ошибка загрузки данных рассылки');
     }
 }
 

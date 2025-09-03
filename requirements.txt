@@ -16,4 +16,5 @@ pytz
 jinja2
 PyJWT
 psycopg2-binary
+python-dateutil
 

@@ -167,93 +167,92 @@
         </div>
         
         <!-- Модальное окно создания/редактирования рассылки -->
-	<div class="modal fade" id="createModal" tabindex="-1">
-	    <div class="modal-dialog">
-		<div class="modal-content">
-		    <div class="modal-header">
-		        <h5 class="modal-title" id="modalTitle">Создать рассылку</h5>
-		        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-		    </div>
-		    <div class="modal-body">
-		        <form id="scheduleForm">
-                    <input type="hidden" id="scheduleId" name="schedule_id">
-                    <div class="mb-3">
-                        <label class="form-label">Название</label>
-                        <input type="text" class="form-control" id="scheduleName" name="name" required>
+        <div class="modal fade" id="createModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTitle">Создать рассылку</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Описание</label>
-                        <textarea class="form-control" id="scheduleDescription" name="description" rows="2"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Тип рассылки</label>
-                        <select class="form-select" id="schedulePeriodicity" name="periodicity" onchange="toggleScheduleFields()">
-                            <option value="weekly">Еженедельно</option>
-                            <option value="interval">Интервал (каждые N дней)</option>
-                            <option value="single">Однократно</option>
-                        </select>
-                    </div>
-                    <div class="mb-3 d-none" id="weeklyFields">
-                        <label class="form-label">Выберите дни недели (ctrl+click для выбора нескольких)</label>
-                        <select multiple class="form-select" id="weekdays" name="days">
-                            <option value="1">Понедельник</option>
-                            <option value="2">Вторник</option>
-                            <option value="3">Среда</option>
-                            <option value="4">Четверг</option>
-                            <option value="5">Пятница</option>
-                            <option value="6">Суббота</option>
-                            <option value="7">Воскресенье</option>
-                        </select>
-                        <div class="row mt-2">
-                            <div class="col-6">
-                                <label class="form-label">Час</label>
-                                <input type="number" class="form-control" id="hour" name="hour" min="0" max="23" value="12">
+                    <div class="modal-body">
+                        <form id="scheduleForm">
+                            <input type="hidden" id="scheduleId" name="schedule_id">
+                            <div class="mb-3">
+                                <label class="form-label">Название</label>
+                                <input type="text" class="form-control" id="scheduleName" name="name" required>
                             </div>
-                            <div class="col-6">
-                                <label class="form-label">Минута</label>
-                                <input type="number" class="form-control" id="minute" name="minute" min="0" max="59" value="0">
+                            <div class="mb-3">
+                                <label class="form-label">Описание</label>
+                                <textarea class="form-control" id="scheduleDescription" name="description" rows="2"></textarea>
                             </div>
-                        </div>
-                    </div>
-                    <div class="mb-3 d-none" id="intervalFields">
-                        <label class="form-label">Дата начала интервальной отправки</label>
-                        <input type="date" class="form-control" id="startDate" name="start_date" value="2025-09-04">
-                        <label class="form-label mt-2">Повторять каждые (дней)</label>
-                        <input type="number" class="form-control" id="intervalDays" name="days_interval" min="1" max="365" value="10">
-                        <div class="row mt-2">
-                            <div class="col-6">
-                                <label class="form-label">Час</label>
-                                <input type="number" class="form-control" id="intervalHour" name="hour" min="0" max="23" value="11">
+                            <div class="mb-3">
+                                <label class="form-label">Тип рассылки</label>
+                                <select class="form-select" id="schedulePeriodicity" name="periodicity">
+                                    <option value="weekly">Еженедельно</option>
+                                    <option value="interval">Интервал (каждые N дней)</option>
+                                    <option value="single">Однократно</option>
+                                </select>
                             </div>
-                            <div class="col-6">
-                                <label class="form-label">Минута</label>
-                                <input type="number" class="form-control" id="intervalMinute" name="minute" min="0" max="59" value="0">
+                            <div class="mb-3 d-none" id="weeklyFields">
+                                <label class="form-label">Выберите дни недели (ctrl+click для выбора нескольких)</label>
+                                <select multiple class="form-select" id="weekdays" name="days">
+                                    <option value="1">Понедельник</option>
+                                    <option value="2">Вторник</option>
+                                    <option value="3">Среда</option>
+                                    <option value="4">Четверг</option>
+                                    <option value="5">Пятница</option>
+                                    <option value="6">Суббота</option>
+                                    <option value="7">Воскресенье</option>
+                                </select>
+                                <div class="row mt-2">
+                                    <div class="col-6">
+                                        <label class="form-label">Час</label>
+                                        <input type="number" class="form-control" id="weeklyHour" min="0" max="23" value="12" required>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Минута</label>
+                                        <input type="number" class="form-control" id="weeklyMinute" min="0" max="59" value="0" required>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                            <div class="mb-3 d-none" id="intervalFields">
+                                <label class="form-label">Дата начала интервальной отправки</label>
+                                <input type="date" class="form-control" id="intervalStartDate" required>
+                                <label class="form-label mt-2">Повторять каждые (дней)</label>
+                                <input type="number" class="form-control" id="intervalDays" min="1" max="365" value="10" required>
+                                <div class="row mt-2">
+                                    <div class="col-6">
+                                        <label class="form-label">Час</label>
+                                        <input type="number" class="form-control" id="intervalHour" min="0" max="23" value="11" required>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Минута</label>
+                                        <input type="number" class="form-control" id="intervalMinute" min="0" max="59" value="0" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3 d-none" id="singleFields">
+                                <label class="form-label">Дата и время отправки</label>
+                                <input type="datetime-local" class="form-control" id="singleDatetime" required>
+                            </div>
+                            <div class="form-text">Время указывается в часовом поясе <span id="hintTimezone"></span></div>
+                            <div class="mb-3">
+                                <label class="form-label">ID пользователей (через запятую)</label>
+                                <input type="text" class="form-control" id="userIds" placeholder="1,2,3 или оставить пустым для всех">
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="isActive" name="is_active" checked>
+                                <label class="form-check-label" for="isActive">Активна</label>
+                            </div>
+                        </form>
                     </div>
-                    <div class="mb-3 d-none" id="singleFields">
-                        <label class="form-label">Дата и время отправки</label>
-                        <input type="datetime-local" class="form-control" id="singleDatetime" name="datetime">
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-primary" onclick="saveSchedule()">Сохранить</button>
                     </div>
-                    <div class="form-text">Время указывается в часовом поясе <span id="hintTimezone"></span></div>
-                    <div class="mb-3">
-                        <label class="form-label">ID пользователей (через запятую)</label>
-                        <input type="text" class="form-control" id="userIds" name="user_ids" placeholder="1,2,3 или оставить пустым для всех">
-                    </div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="isActive" name="is_active" checked>
-                        <label class="form-check-label">Активна</label>
-                    </div>
-                </form>
-
-		    </div>
-		    <div class="modal-footer">
-		        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-		        <button type="button" class="btn btn-primary" onclick="saveSchedule()">Сохранить</button>
-		    </div>
-		</div>
-	    </div>
-	</div>
+                </div>
+            </div>
+        </div>
 
         <!-- Модальное окно смены пароля/логина -->
         <div class="modal fade" id="changeCredentialsModal" tabindex="-1">

@@ -75,30 +75,33 @@ class SubscribeResponse(BaseModel):
 class UnsubscribeRequest(BaseModel):
     email: EmailStr
 
-class ScheduleBase(BaseModel):
+class ScheduleConfig(BaseModel):
+    periodicity: str
+    days: Optional[List[int]] = None
+    hour: Optional[int] = None
+    minute: Optional[int] = None
+    days_interval: Optional[int] = None
+    start_date: Optional[str] = None
+    datetime: Optional[str] = None
+    timezone: Optional[str] = None
+
+class ScheduleCreate(BaseModel):
     name: str
     description: Optional[str] = None
     user_ids: Optional[List[int]] = None
-    schedule_type: str  # 'cron' | 'date'
-    cron_expression: Optional[str] = None
-    specific_date: Optional[datetime] = None
+    schedule_config: ScheduleConfig
     is_active: bool = True
     admin_timezone: Optional[str] = "UTC"
-
-class ScheduleCreate(ScheduleBase):
-    pass
 
 class ScheduleUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     user_ids: Optional[List[int]] = None
-    schedule_type: Optional[str] = None
-    cron_expression: Optional[str] = None
-    specific_date: Optional[datetime] = None
+    schedule_config: Optional[ScheduleConfig] = None
     is_active: Optional[bool] = None
     admin_timezone: Optional[str] = None
 
-class Schedule(ScheduleBase):
+class Schedule(ScheduleCreate):
     id: int
     last_run: Optional[datetime] = None
     created_at: datetime
