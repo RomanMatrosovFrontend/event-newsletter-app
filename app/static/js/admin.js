@@ -283,18 +283,40 @@ async function editSchedule(id) {
 // Сохранение рассылки
 async function saveSchedule() {
     const formData = new FormData(document.getElementById('scheduleForm'));
-    
+    const scheduleId = document.getElementById('scheduleId').value;
+    const periodicity = document.getElementById('schedulePeriodicity').value;
+
+    let scheduleConfig = {
+        periodicity: periodicity,
+        timezone: adminTimezone,
+    };
+
+    if (periodicity === 'weekly') {
+        const days = [];
+        document.querySelectorAll('.weekday:checked').forEach(cb => {
+            days.push(parseInt(cb.value));
+        });
+        scheduleConfig.days = days;
+        scheduleConfig.hour = parseInt(document.getElementById('weeklyHour').value);
+        scheduleConfig.minute = parseInt(document.getElementById('weeklyMinute').value);
+    } else if (periodicity === 'interval') {
+        scheduleConfig.days_interval = parseInt(document.getElementById('intervalDays').value);
+        scheduleConfig.start_date = document.getElementById('intervalStartDate').value;
+        scheduleConfig.hour = parseInt(document.getElementById('intervalHour').value);
+        scheduleConfig.minute = parseInt(document.getElementById('intervalMinute').value);
+    } else if (periodicity === 'single') {
+        scheduleConfig.datetime = document.getElementById('singleDatetime').value;
+    }
+
     const scheduleData = {
         name: formData.get('name'),
         description: formData.get('description'),
-        schedule_type: formData.get('schedule_type'),
-        cron_expression: formData.get('cron_expression') || null,
-        specific_date: formData.get('specific_date') || null,
+        schedule_config: scheduleConfig,
         is_active: formData.get('is_active') === 'on',
-        admin_timezone: adminTimezone // ДОБАВЛЯЕМ ЧАСОВОЙ ПОЯС
+        admin_timezone: adminTimezone
     };
 
-    // Обработка пользователей
+    // Обработка user_ids — без изменений
     const userIdsInput = formData.get('user_ids');
     if (userIdsInput && userIdsInput.trim()) {
         try {
@@ -304,23 +326,16 @@ async function saveSchedule() {
             return;
         }
     }
-    
-    console.log('Отправляемые данные:', JSON.stringify(scheduleData, null, 2));
-    const scheduleId = document.getElementById('scheduleId').value;
 
+    // ... отправка на сервер — без изменений
     try {
-        const url = scheduleId ? 
-            `${API_BASE}/schedules/${scheduleId}` : 
-            `${API_BASE}/schedules/`;
-        
+        const url = scheduleId ? `${API_BASE}/schedules/${scheduleId}` : `${API_BASE}/schedules/`;
         const method = scheduleId ? 'PUT' : 'POST';
-
         const response = await fetch(url, {
             method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(scheduleData)
         });
-
         if (response.ok) {
             bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
             loadSchedules();

@@ -56,29 +56,17 @@ class NewsletterLog(Base):
     
 class NewsletterSchedule(Base):
     __tablename__ = "newsletter_schedules"
-
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)  # Например: "Еженедельная рассылка по понедельникам"
+    name = Column(String, nullable=False)
     description = Column(Text, nullable=True)
-    
-    # Критерии отбора пользователей (NULL = все подписанные)
-    user_ids = Column(JSON, nullable=True)  # Список ID конкретных пользователей [1, 2, 3]
-    # Можно добавить другие критерии: по городу, категориям и т.д.
-    
-    # Параметры расписания (используется синтаксис Cron или конкретная дата)
-    schedule_type = Column(String, nullable=False)  # 'cron' | 'date'
-    cron_expression = Column(String, nullable=True)  # Например: "0 10 * * 1" (каждый понедельник в 10:00)
-    specific_date = Column(DateTime(timezone=True), nullable=True)  # Например: 2024-08-21 12:00:00
-    
-    # Статус и метаданные
+    user_ids = Column(JSON, nullable=True)  # ID пользователей или null для всех
+    schedule_config = Column(JSON, nullable=False, default={})  # Всё расписание здесь
     is_active = Column(Boolean, default=True)
     last_run = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-
     admin_timezone = Column(String, nullable=True, default="UTC")
-    
-    # Связь с логами (опционально)
     logs = relationship("NewsletterLog", back_populates="schedule")
+
 
 
 class AdminUser(Base):
