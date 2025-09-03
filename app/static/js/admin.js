@@ -536,3 +536,46 @@ async function uploadCSV() {
         spinner.classList.add('d-none');
     }
 }
+
+async function clearEvents() {
+    const spinner = document.getElementById('clearSpinner');
+    const clearResults = document.getElementById('csvResultsContent');
+    const resultsDiv = document.getElementById('csvResults');
+    
+    if (!confirm('Вы точно хотите удалить ВСЕ события из базы?')) return;
+    
+    spinner.classList.remove('d-none');
+    try {
+        const response = await fetch(`${API_BASE}/events/clear-events/`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+        const result = await response.json();
+        
+        if (response.ok) {
+            clearResults.innerHTML = `
+                <div class="alert alert-success">
+                    <strong>Удалено:</strong> ${result.message}
+                </div>
+            `;
+            resultsDiv.style.display = 'block';
+        } else {
+            clearResults.innerHTML = `
+                <div class="alert alert-danger">
+                    Ошибка: ${result.detail || 'Неизвестная ошибка'}
+                </div>
+            `;
+            resultsDiv.style.display = 'block';
+        }
+    } catch (error) {
+        clearResults.innerHTML = `
+            <div class="alert alert-danger">
+                Ошибка: ${error.message}
+            </div>
+        `;
+        resultsDiv.style.display = 'block';
+    } finally {
+        spinner.classList.add('d-none');
+    }
+}
+

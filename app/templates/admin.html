@@ -123,6 +123,7 @@
                             </button>
                         </div>
                     </div>
+                    
                     <div class="card mt-3">
                         <div class="card-header bg-info text-white">
                             <i class="bi bi-file-earmark-spreadsheet"></i> Загрузка событий из CSV
@@ -133,10 +134,14 @@
                                 <input type="file" class="form-control" id="csvFile" accept=".csv" />
                             </div>
                             
-                            <div class="mb-3">
+                            <div class="mt-3 d-flex gap-2">
                                 <button type="button" class="btn btn-primary" onclick="uploadCSV()">
                                     <span id="uploadSpinner" class="spinner-border spinner-border-sm d-none me-2"></span>
                                     <i class="bi bi-upload"></i> Загрузить события
+                                </button>
+                                <button type="button" class="btn btn-danger" id="clearEventsButton" onclick="clearEvents()">
+                                    <span id="clearSpinner" class="spinner-border spinner-border-sm d-none me-2"></span>
+                                    <i class="bi bi-trash"></i> Очистить все события
                                 </button>
                             </div>
                             
@@ -146,6 +151,7 @@
                             </div>
                         </div>
                     </div>
+                    
                     <div class="card mt-3">
                         <div class="card-header bg-warning text-dark">
                             <i class="bi bi-calendar-event"></i> Управление событиями

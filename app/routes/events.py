@@ -97,6 +97,16 @@ async def upload_csv(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
+@router.post("/clear-events/")
+async def clear_all_events(db: Session = Depends(get_db)):
+    try:
+        db.query(models.Event).delete()
+        db.commit()
+        return {"message": "All events have been deleted", "deleted": True}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to clear events: {str(e)}")
+
 @router.get("/count", response_model=schemas.EventCountResponse)
 async def get_events_count(db: Session = Depends(get_db)) -> schemas.EventCountResponse:
     """Получение общего количества событий"""
