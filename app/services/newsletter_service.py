@@ -4,20 +4,23 @@ from typing import List
 from app.models import User, NewsletterLog
 from app.utils.event_matcher import get_events_for_user
 from app.services.email_service import send_email_via_postmark
-from app.services.template_service import template_service
+from jinja2 import Environment, FileSystemLoader
+import os
+import time
+import datetime
 
 logger = logging.getLogger(__name__)
 
-def send_newsletter_to_all_users(db: Session):
-    """
-    Основная функция для отправки рассылки всем пользователям
-    """
-    import time  # Добавляем импорт для замера времени
-    start_time = time.time()  # Засекаем время начала
+# Путь к папке с шаблонами (должно быть app/templates/emails/)
+TEMPLATE_PATH = 'app/templates/emails'
+jinja_env = Environment(loader=FileSystemLoader(TEMPLATE_PATH), autoescape=True)
 
+def send_newsletter_to_all_users(db: Session):
+    """Основная функция для отправки рассылки всем пользователям."""
+    start_time = time.time()
     logger.info("🎯 Starting newsletter campaign...")
+
     try:
-        # 1. Получаем всех подписанных пользователей
         users = db.query(User).filter(User.is_subscribed == True).all()
         total_users = len(users)
         logger.info(f"📋 Found {total_users} subscribed users.")
@@ -25,27 +28,24 @@ def send_newsletter_to_all_users(db: Session):
         successful = 0
         failed = 0
 
-        # 2. Для каждого пользователя...
+        template = jinja_env.get_template('newsletter.html')
+
         for user in users:
-            logger.info(f"   👤 Processing user: {user.email} (ID: {user.id})")
+            logger.info(f"👤 Processing user: {user.email} (ID: {user.id})")
             try:
-                # 2.1. Находим подходящие события
                 events = get_events_for_user(db, user)
-                logger.info(f"      ✅ Found {len(events)} events for user.")
+                logger.info(f"✅ Found {len(events)} events for user.")
 
                 if events:
-                    # 2.2. Здесь будет логика генерации и отправки письма
-                    # Пока просто логируем, но это означает, что для этого пользователя есть что отправлять!
-                    subject = f"Анонс мероприятий для вас!"
-                    # Пока используем простой текст для теста
-                    html_body = f"<h1>Привет!</h1><p>Для вас найдено {len(events)} мероприятий.</p>"
-                    html_body += "<ul>"
-                    for event in events:
-                        html_body += f"<li><a href='{event.url}'>{event.title}</a> ({event.dates})</li>"
-                    html_body += "</ul>"
+                    subject = "Анонс мероприятий для вас!"
+                    context = {
+                        'name': user.email.split('@')[0],
+                        'events': events,
+                        'now': datetime.datetime.now()
+                    }
+                    html_body = template.render(context)
 
-                    # 2.3. ВЫЗОВ РЕАЛЬНОЙ ФУНКЦИИ ОТПРАВКИ!
-                    logger.info(f"      📤 Attempting to send email to {user.email}...")
+                    logger.info(f"📤 Sending email to {user.email}...")
                     email_sent = send_email_via_postmark(
                         to_email=user.email,
                         subject=subject,
@@ -53,35 +53,29 @@ def send_newsletter_to_all_users(db: Session):
                     )
 
                     if email_sent:
-                        logger.info(f"      📩 Email successfully sent to {user.email}")
+                        logger.info(f"📩 Email successfully sent to {user.email}")
                         successful += 1
                     else:
-                        logger.error(f"      ❌ Failed to send email to {user.email}")
+                        logger.error(f"❌ Failed to send email to {user.email}")
                         failed += 1
                 else:
-                    logger.info(f"      ℹ️  No events for user {user.email}. Skipping.")
-                    successful += 1  # Не считать пропуск из-за отсутствия событий за ошибку
-
+                    logger.info(f"ℹ️ No events for user {user.email}. Skipping.")
+                    successful += 1
             except Exception as e:
                 failed += 1
-                logger.error(f"      ⚠️  Failed to process user {user.email}: {str(e)}")
-                # Продолжаем обработку для остальных пользователей
+                logger.error(f"⚠️ Failed to process user {user.email}: {str(e)}")
                 continue
 
-        # 3. Считаем общее время выполнения
         duration_seconds = time.time() - start_time
-
-        # 4. Сохраняем статистику
         log = NewsletterLog(
             total_users=total_users,
             successful_sends=successful,
             failed_sends=failed,
-            duration_seconds=duration_seconds  # Теперь здесь число!
+            duration_seconds=duration_seconds
         )
         db.add(log)
         db.commit()
         logger.info(f"📊 Newsletter finished! Success: {successful}, Failed: {failed}, Duration: {duration_seconds:.2f}s")
-
         return successful, failed
 
     except Exception as e:
@@ -89,16 +83,14 @@ def send_newsletter_to_all_users(db: Session):
         return 0, 0
 
 def send_newsletter_to_users(db: Session, user_ids: List[int]):
-    """
-    Отправляет рассылку только указанным пользователям
-    """
-    import time
+    """Отправляет рассылку только указанным пользователям."""
     start_time = time.time()
-
     logger.info(f"🎯 Starting targeted newsletter for {len(user_ids)} users...")
-    
+
     successful = 0
     failed = 0
+
+    template = jinja_env.get_template('newsletter.html')
 
     for user_id in user_ids:
         try:
@@ -108,15 +100,16 @@ def send_newsletter_to_users(db: Session, user_ids: List[int]):
                 continue
 
             events = get_events_for_user(db, user)
-            logger.info(f"   ✅ Found {len(events)} events for user {user.email}")
+            logger.info(f"✅ Found {len(events)} events for user {user.email}")
 
             if events:
-                subject = f"Анонс мероприятий для вас!"
-                html_body = f"<h1>Привет!</h1><p>Для вас найдено {len(events)} мероприятий.</p>"
-                html_body += "<ul>"
-                for event in events:
-                    html_body += f"<li><a href='{event.url}'>{event.title}</a> ({event.dates})</li>"
-                html_body += "</ul>"
+                subject = "Анонс мероприятий для вас!"
+                context = {
+                    'name': user.email.split('@')[0],
+                    'events': events,
+                    'now': datetime.datetime.now()
+                }
+                html_body = template.render(context)
 
                 email_sent = send_email_via_postmark(
                     to_email=user.email,
@@ -129,15 +122,15 @@ def send_newsletter_to_users(db: Session, user_ids: List[int]):
                 else:
                     failed += 1
             else:
-                logger.info(f"      ℹ️  No events for user {user.email}. Skipping.")
+                logger.info(f"ℹ️ No events for user {user.email}. Skipping.")
                 successful += 1
 
         except Exception as e:
             failed += 1
-            logger.error(f"      ⚠️  Failed to process user {user_id}: {str(e)}")
+            logger.error(f"⚠️ Failed to process user {user_id}: {str(e)}")
             continue
 
     duration_seconds = time.time() - start_time
     logger.info(f"📊 Targeted newsletter finished! Success: {successful}, Failed: {failed}")
-    
     return successful, failed
+

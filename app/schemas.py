@@ -12,6 +12,7 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     categories: Optional[List[str]] = None
+    cities: List[str]
 
 # Для обновления профиля пользователя по email
 class UserEmailUpdate(BaseModel):

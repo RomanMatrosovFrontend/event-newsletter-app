@@ -1,27 +1,67 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <meta charset="utf-8">
-    <title>События на этой неделе</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Анонс мероприятий для вас</title>
 </head>
-<body>
-    <h2>Приветствуем, {{ user.email }}!</h2>
-    <p>Мы подобрали для вас интересные события:</p>
-    
-    {% for event in events %}
-    <div class="event">
-        <h3>{{ event.title }}</h3>
-        <p>{{ event.description }}</p>
-        <p>Когда: {{ event.dates[0] if event.dates else 'Дата уточняется' }}</p>
-        <a href="{{ event.url }}">Подробнее</a>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f7f7f7;">
+    <div style="background: #007bff; color: #fff; padding: 20px; text-align: center;">
+        <h1 style="margin: 0; font-size: 24px;">Montemood</h1>
     </div>
-    {% endfor %}
-    
-    <hr>
-    <p>
-        <small>
-            <a href="{{ unsubscribe_url }}">Отписаться от рассылки</a>
-        </small>
-    </p>
+    <div style="background: #fff; padding: 24px 20px; line-height: 1.45; color: #333;">
+        <p style="margin-top: 0; font-size: 18px; font-weight: bold;">
+            Привет, {{ name }}!
+        </p>
+        <p style="font-size: 15px; color: #666; margin-bottom: 20px;">
+            Мы подобрали для вас интересные события. До встречи!
+        </p>
+        <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+            {% for event in events %}
+            <tr style="border-bottom: 1px solid #f2f2f2; padding: 12px 0;">
+                <td style="padding: 12px 0;">
+                    <div style="margin-bottom: 12px;">
+                        {% if event.photo %}
+                        <img src="{{ event.photo }}" alt="{{ event.title }}" style="width: 100%; max-width: 360px; margin-bottom: 10px; display: block; border-radius: 4px; border: 1px solid #eee;">
+                        {% endif %}
+                        <a href="{{ event.url }}" style="color: #007bff; font-weight: bold; font-size: 16px; text-decoration: none;">
+                            {{ event.title }}
+                        </a>
+                        {% if event.description %}
+                        <p style="margin: 6px 0; color: #666; font-size: 14px;">
+                            {{ event.description }}
+                        </p>
+                        {% endif %}
+                        {% if event.city %}
+                        <p style="margin: 6px 0; color: #777; font-size: 14px;">
+                            <strong>Город:</strong> {{ event.city }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td style="padding: 12px 0; color: #666; font-size: 14px; text-align: center;">
+                    Пока нет подходящих событий. Ждите новые анонсы!
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <div style="background: #f7f7f7; padding: 16px 20px; font-size: 13px; color: #666; text-align: center;">
+        <p style="margin: 4px 0;">
+            <a href="https://event-newsletter-app.onrender.com/api/unsubscribe/" style="display: inline-block; background: #007bff; color: #fff; text-decoration: none; padding: 8px 24px; border-radius: 4px; margin: 8px auto;">
+                Отписаться от рассылки
+            </a>
+        </p>
+        <p style="margin: 4px 0;">
+            С заботой, команда Montemood
+        </p>
+    </div>
+    <div style="padding: 12px 20px; font-size: 11px; color: #999; text-align: center;">
+        © {{ now.year }} Montemood
+    </div>
 </body>
 </html>
+

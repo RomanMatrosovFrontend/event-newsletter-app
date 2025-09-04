@@ -12,6 +12,15 @@ user_categories = Table(
     Column('category', String, primary_key=True)
 )
 
+# Таблица для связи многие-ко-многим пользователей и городов
+user_cities = Table(
+    'user_cities',
+    Base.metadata,
+    Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
+    Column('city', String, primary_key=True)
+)
+
+
 class User(Base):
     __tablename__ = "users"
 

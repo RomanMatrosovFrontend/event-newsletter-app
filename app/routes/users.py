@@ -96,10 +96,17 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
     categories_result = db.execute(categories_stmt).fetchall()
     categories = [row.category for row in categories_result]
     
+    cities_stmt = models.user_cities.select().where(
+        models.user_cities.c.user_id == user_id
+    )
+    cities_result = db.execute(cities_stmt).fetchall()
+    cities = [row.city for row in cities_result]
+
     return schemas.User(
         id=db_user.id,
         email=db_user.email,
         categories=categories,
+        cities=cities,
         created_at=db_user.created_at,
         updated_at=db_user.updated_at
     )
@@ -107,9 +114,6 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
 # READ BY EMAIL - Получение пользователя по email
 @router.get("/email/{email}", response_model=schemas.User)
 def read_user_by_email(email: str, db: Session = Depends(get_db)):
-    """
-    Возвращает пользователя по email.
-    """
     db_user = db.query(models.User).filter(models.User.email == email).first()
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
@@ -121,13 +125,22 @@ def read_user_by_email(email: str, db: Session = Depends(get_db)):
     categories_result = db.execute(categories_stmt).fetchall()
     categories = [row.category for row in categories_result]
     
+    # Получаем города пользователя
+    cities_stmt = models.user_cities.select().where(
+        models.user_cities.c.user_id == db_user.id
+    )
+    cities_result = db.execute(cities_stmt).fetchall()
+    cities = [row.city for row in cities_result]
+    
     return schemas.User(
         id=db_user.id,
         email=db_user.email,
         categories=categories,
+        cities=cities,                    # Добавляем cities в ответ
         created_at=db_user.created_at,
         updated_at=db_user.updated_at
     )
+
 
 # UPDATE - Обновление пользователя
 @router.put("/{user_id}", response_model=schemas.User)
