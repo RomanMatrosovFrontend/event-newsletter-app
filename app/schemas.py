@@ -5,6 +5,7 @@ from datetime import datetime
 class UserBase(BaseModel):
     email: EmailStr
     categories: List[str] = []
+    cities: List[str] = []
 
 class UserCreate(UserBase):
     pass
