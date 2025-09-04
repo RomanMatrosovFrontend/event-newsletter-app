@@ -67,6 +67,7 @@ class Event(EventBase):
 class SubscribeRequest(BaseModel):
     email: EmailStr
     categories: List[str]
+    cities: List[str]
 
 class SubscribeResponse(BaseModel):
     status: str
