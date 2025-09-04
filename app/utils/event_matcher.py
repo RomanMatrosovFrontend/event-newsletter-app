@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import or_, and_, _not
+from sqlalchemy import or_, and_, not_
 from typing import List
 from app import models
 
