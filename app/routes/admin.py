@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request, Response, Form
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, Form, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from typing import Dict, List
-from app import models, schemas
+from app import schemas, models
 from app.core.auth import create_access_token, get_current_admin
 from app.database import get_db
 from app.models import AdminUser
@@ -252,4 +252,32 @@ async def get_events_count(db: Session = Depends(get_db)) -> EventCountResponse:
     """Получение общего количества событий"""
     count = db.query(models.Event).count()
     return EventCountResponse(count=count)
+
+@router.post("/get-users", response_model=list)
+async def get_users_by_subscription_type(
+    subscription_types: List[str] = Body([]),
+    db: Session = Depends(get_db),
+    current_admin: str = Depends(get_current_admin)  # Защита админским доступом
+):
+    if not subscription_types:
+        return []
+    
+    # Получаем ID типов рассылки по их кодам
+    type_ids = [
+        t.id for t in db.query(models.SubscriptionType)
+        .filter(models.SubscriptionType.code.in_(subscription_types))
+        .all()
+    ]
+    if not type_ids:
+        return []
+    
+    # Ищем пользователей, подписанных хотя бы на один из выбранных типов
+    users = (
+        db.query(models.User)
+        .join(models.user_subscription_types)
+        .filter(models.user_subscription_types.c.subscription_type_id.in_(type_ids))
+        .distinct()
+        .all()
+    )
+    return [{"id": user.id, "email": user.email} for user in users]
 

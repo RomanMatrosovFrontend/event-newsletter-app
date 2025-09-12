@@ -117,29 +117,45 @@ def read_user_by_email(email: str, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.email == email).first()
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     # Получаем категории пользователя
     categories_stmt = models.user_categories.select().where(
         models.user_categories.c.user_id == db_user.id
     )
     categories_result = db.execute(categories_stmt).fetchall()
     categories = [row.category for row in categories_result]
-    
+
     # Получаем города пользователя
     cities_stmt = models.user_cities.select().where(
         models.user_cities.c.user_id == db_user.id
     )
     cities_result = db.execute(cities_stmt).fetchall()
     cities = [row.city for row in cities_result]
-    
+
+    # Получаем типы рассылки пользователя
+    subscription_types_stmt = models.user_subscription_types.select().where(
+        models.user_subscription_types.c.user_id == db_user.id
+    )
+    subscription_types_result = db.execute(subscription_types_stmt).fetchall()
+    subscription_types = []
+    for row in subscription_types_result:
+        # Находим код типа рассылки по ID (из таблицы subscription_types)
+        type_row = db.query(models.SubscriptionType).filter(
+            models.SubscriptionType.id == row.subscription_type_id
+        ).first()
+        if type_row:
+            subscription_types.append(type_row.code)
+
     return schemas.User(
         id=db_user.id,
         email=db_user.email,
         categories=categories,
-        cities=cities,                    # Добавляем cities в ответ
+        cities=cities,
+        subscription_types=subscription_types,  # Добавляем типы рассылки
         created_at=db_user.created_at,
         updated_at=db_user.updated_at
     )
+
 
 
 # UPDATE - Обновление пользователя

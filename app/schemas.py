@@ -24,6 +24,7 @@ class User(UserBase):
     id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
+    subscription_types: List[str]
 
     class Config:
         from_attributes = True
@@ -139,6 +140,12 @@ class ChangeCredentialsRequest(BaseModel):
     current_password: str
     new_username: Optional[str] = None  
     new_password: Optional[str] = None
+    
+class SubscribeRequest(BaseModel):
+    email: EmailStr
+    categories: List[str]
+    cities: List[str]
+    subscription_types: List[str]
 
 class Token(BaseModel):
     access_token: str

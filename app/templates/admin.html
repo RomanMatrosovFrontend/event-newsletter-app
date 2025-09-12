@@ -220,6 +220,30 @@
                                 <label class="form-label">ID пользователей (через запятую)</label>
                                 <input type="text" class="form-control" id="userIds" placeholder="1,2,3 или оставить пустым для всех">
                             </div>
+                            <div class="mb-3">
+			                    <label class="form-label">Фильтр по типам рассылки</label>
+			                    <div class="small text-muted mb-2">Выберите пользователей, подписанных на нужные типы:</div>
+			                    <div>
+				                <label class="form-check form-check-inline">
+				                    <input class="form-check-input" type="checkbox" id="subscriptionWeekly" value="weekly">
+				                    <span class="form-check-label">Раз в неделю</span>
+				                </label>
+				                <label class="form-check form-check-inline">
+				                    <input class="form-check-input" type="checkbox" id="subscriptionMonthly" value="monthly">
+				                    <span class="form-check-label">Раз в месяц</span>
+				                </label>
+				                <label class="form-check form-check-inline">
+				                    <input class="form-check-input" type="checkbox" id="subscriptionBiWeekly" value="bi_weekly">
+				                    <span class="form-check-label">Дважды в месяц</span>
+				                </label>
+			                    </div>
+			                    <div class="mt-2">
+				                <button type="button" class="btn btn-sm btn-outline-primary"
+					                onclick="applySubscriptionTypeFilter()">
+				                    Применить фильтр
+				                </button>
+			                    </div>
+			                </div>
                             <div class="form-check mb-3">
                                 <input class="form-check-input" type="checkbox" id="isActive" name="is_active" checked>
                                 <label class="form-check-label" for="isActive">Активна</label>

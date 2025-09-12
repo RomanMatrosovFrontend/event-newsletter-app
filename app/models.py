@@ -20,6 +20,13 @@ user_cities = Table(
     Column('city', String, primary_key=True)
 )
 
+user_subscription_types = Table(
+    'user_subscription_types',
+    Base.metadata,
+    Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
+    Column('subscription_type_id', Integer, ForeignKey('subscription_types.id'), primary_key=True)
+)
+
 
 class User(Base):
     __tablename__ = "users"
@@ -29,6 +36,7 @@ class User(Base):
     is_subscribed = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    subscription_types = relationship("SubscriptionType", secondary=user_subscription_types, backref="users")
 
 
 class Event(Base):
@@ -90,3 +98,10 @@ class AdminUser(Base):
 
     def check_password(self, password: str) -> bool:
         return check_password_hash(self.password_hash, password)
+
+
+class SubscriptionType(Base):
+    __tablename__ = "subscription_types"
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String, unique=True, nullable=False)  # например, "weekly", "monthly", "bi_monthly"
+

@@ -14,10 +14,15 @@ async def subscribe(subscribe_data: schemas.SubscribeRequest, db: Session = Depe
         db_user = db.query(models.User).filter(models.User.email == subscribe_data.email).first()
         
         if db_user:
-            # Пользователь существует — обновляем категории и города
+            # Удаляем старые категории и города
             db.execute(models.user_categories.delete().where(models.user_categories.c.user_id == db_user.id))
             db.execute(models.user_cities.delete().where(models.user_cities.c.user_id == db_user.id))
+            # Удаляем старые типы рассылки
+            db.execute(models.user_subscription_types.delete().where(
+                models.user_subscription_types.c.user_id == db_user.id
+            ))
             
+            # Добавляем новые категории и города
             for category in subscribe_data.categories:
                 db.execute(models.user_categories.insert().values(
                     user_id=db_user.id,
@@ -28,6 +33,15 @@ async def subscribe(subscribe_data: schemas.SubscribeRequest, db: Session = Depe
                 db.execute(models.user_cities.insert().values(
                     user_id=db_user.id,
                     city=city.strip()
+                ))
+            
+            # Добавляем новые типы рассылки
+            for sub_type in subscribe_data.subscription_types:
+                db.execute(models.user_subscription_types.insert().values(
+                    user_id=db_user.id,
+                    subscription_type_id=db.query(models.SubscriptionType)
+                        .filter(models.SubscriptionType.code == sub_type)
+                        .first().id
                 ))
             
             db.commit()
@@ -48,6 +62,14 @@ async def subscribe(subscribe_data: schemas.SubscribeRequest, db: Session = Depe
                 db.execute(models.user_cities.insert().values(
                     user_id=db_user.id,
                     city=city.strip()
+                ))
+            
+            for sub_type in subscribe_data.subscription_types:
+                db.execute(models.user_subscription_types.insert().values(
+                    user_id=db_user.id,
+                    subscription_type_id=db.query(models.SubscriptionType)
+                        .filter(models.SubscriptionType.code == sub_type)
+                        .first().id
                 ))
             
             db.commit()

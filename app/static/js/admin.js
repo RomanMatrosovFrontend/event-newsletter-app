@@ -636,3 +636,57 @@ async function clearEvents() {
     }
 }
 
+// Функция фильтрации пользователей по типу подписки — жмём "Применить фильтр"
+function applySubscriptionTypeFilter() {
+    // Собираем выбранные типы рассылки (чекбоксы с id^="subscription")
+    const selectedTypes = Array.from(
+        document.querySelectorAll('#createModal input[type="checkbox"][id^="subscription"]:checked')
+    ).map(el => el.value);
+
+    // Если не выбрано — ошибка
+    if (selectedTypes.length === 0) {
+        showError('Выберите хотя бы один тип рассылки');
+        return;
+    }
+
+    // Показываем загрузку (опционально)
+    showLoadingOnUserIdField();
+
+    // Отправляем на бэк
+    fetch(`${API_BASE}/admin/get-users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription_types: selectedTypes })
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.json();
+        } else {
+            throw new Error('Ошибка фильтрации');
+        }
+    })
+    .then(users => {
+        // Получаем массив ID пользователей
+        const userIds = users.map(u => u.id).join(',');
+        // Вставляем в поле user_ids
+        document.getElementById('userIds').value = userIds;
+    })
+    .catch(error => {
+        showError('Ошибка фильтрации: ' + error.message);
+    });
+}
+
+// Удобно добавить спинер на время загрузки (опционально)
+function showLoadingOnUserIdField() {
+    const field = document.getElementById('userIds');
+    const oldVal = field.value;
+    field.value = 'Загрузка...';
+    const clearLoading = () => {
+        // Если не было ошибки и поле не изменилось — восстанавливаем старое значение
+        if (field.value === 'Загрузка...') {
+            field.value = oldVal;
+        }
+    };
+    setTimeout(clearLoading, 20000); // Долго не грузится — сбросить
+}
+
