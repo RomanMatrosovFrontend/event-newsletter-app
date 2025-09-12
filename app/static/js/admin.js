@@ -656,7 +656,7 @@ function applySubscriptionTypeFilter() {
     fetch(`${API_BASE}/admin/get-users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subscription_types: selectedTypes })
+        body: JSON.stringify(selectedTypes)
     })
     .then(response => {
         if (response.ok) {
