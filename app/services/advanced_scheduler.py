@@ -8,14 +8,22 @@ from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.combining import OrTrigger
 from sqlalchemy.orm import Session
-
 from app.database import get_db
 from app.services import newsletter_service
 from app.models import NewsletterSchedule
-
 logger = logging.getLogger(__name__)
-
 scheduler = BackgroundScheduler(daemon=True)
+
+# Маппинг номеров дней недели (ISO) на английские сокращения для CronTrigger
+DAY_OF_WEEK_MAP = {
+    1: 'mon',
+    2: 'tue',
+    3: 'wed',
+    4: 'thu',
+    5: 'fri',
+    6: 'sat',
+    7: 'sun'
+}
 
 def init_scheduler():
     """Инициализация планировщика при запуске приложения"""
@@ -62,6 +70,10 @@ def convert_admin_time_to_utc(admin_datetime, admin_timezone):
         logger.error(f"Error converting time to UTC: {str(e)}")
         return admin_datetime.replace(tzinfo=pytz.UTC)
 
+def to_apscheduler_days(days):
+    """Преобразует дни недели ISO (1—7) в строку для CronTrigger"""
+    return ','.join(DAY_OF_WEEK_MAP[day] for day in days if day in DAY_OF_WEEK_MAP)
+
 def schedule_job(schedule, db):
     job_id = f"schedule_{schedule.id}"
     config = getattr(schedule, 'schedule_config', None)
@@ -78,11 +90,11 @@ def schedule_job(schedule, db):
                 minute = config.get("minute", 0)
                 if not days:
                     raise ValueError("Days for weekly schedule not specified")
-                # Normalize days for Cron: 0=Sun, 1=Mon, ... 6=Sat (or 7=Sun, if needed — уточни конвенцию)
-                # Здесь исходим, что в списке days 1=Пн, ..., 7=Вс (ISO)
-                # CronTrigger ожидает 0=Sun, 1=Mon, ... 6=Sat, но можно и "mon", "tue", etc.
-                # Можно просто передавать список как есть, если CronTrigger поймёт.
-                day_str = ",".join([str(day % 7) for day in days])  # Или str(day % 7 or 7), чтобы Вс=7
+                # **Здесь исправляем: используем именованные дни недели**
+                day_str = to_apscheduler_days(days)
+                print(f"Selected days: {days}")
+                print(f"Day string for CronTrigger: {day_str}")
+                print(f"Time: {hour}:{minute} (timezone: {timezone})")
                 trigger = CronTrigger(
                     day_of_week=day_str,
                     hour=hour,
@@ -118,7 +130,6 @@ def schedule_job(schedule, db):
                 trigger = DateTrigger(run_date=utc_time)
             else:
                 raise ValueError('No valid scheduling data found')
-
         scheduler.add_job(
             run_scheduled_newsletter,
             trigger=trigger,
@@ -128,7 +139,6 @@ def schedule_job(schedule, db):
             name=schedule.name
         )
         print(f"✅ Created job: {job_id}")
-
     except Exception as e:
         print(f"❌ Error creating job {job_id}: {str(e)}")
         logger.error(f"Failed to schedule job {job_id}: {str(e)}")

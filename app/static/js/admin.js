@@ -274,10 +274,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Сохранение рассылки
 async function saveSchedule() {
+    // Проверяем, что название заполнено
+    const scheduleName = document.getElementById('scheduleName').value.trim();
+    if (!scheduleName) {
+        showError('Укажите название рассылки');
+        return;
+    }
+
     const formData = new FormData(document.getElementById('scheduleForm'));
     const scheduleId = document.getElementById('scheduleId').value;
     const periodicity = document.getElementById('schedulePeriodicity').value;
-
     let scheduleConfig = {
         periodicity: periodicity,
         timezone: adminTimezone,
@@ -285,10 +291,10 @@ async function saveSchedule() {
 
     if (periodicity === 'weekly') {
         const days = [];
-	    const weekdaysSelect = document.getElementById('weekdays');
-	    for (let option of weekdaysSelect.selectedOptions) {
-	        days.push(parseInt(option.value));
-	    }
+        const weekdaysSelect = document.getElementById('weekdays');
+        for (let option of weekdaysSelect.selectedOptions) {
+            days.push(parseInt(option.value));
+        }
         scheduleConfig.days = days;
         scheduleConfig.hour = parseInt(document.getElementById('weeklyHour').value);
         scheduleConfig.minute = parseInt(document.getElementById('weeklyMinute').value);
@@ -302,7 +308,7 @@ async function saveSchedule() {
     }
 
     const scheduleData = {
-        name: formData.get('name'),
+        name: scheduleName, // Берем проверенное название
         description: formData.get('description'),
         schedule_config: scheduleConfig,
         is_active: formData.get('is_active') === 'on',
@@ -320,7 +326,7 @@ async function saveSchedule() {
         }
     }
 
-    // ... отправка на сервер — без изменений
+    // Отправка на сервер — без изменений
     try {
         const url = scheduleId ? `${API_BASE}/schedules/${scheduleId}` : `${API_BASE}/schedules/`;
         const method = scheduleId ? 'PUT' : 'POST';
@@ -341,6 +347,7 @@ async function saveSchedule() {
         showError('Ошибка: ' + error.message);
     }
 }
+
 
 // Запуск рассылки
 async function runSchedule(id) {
