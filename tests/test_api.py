@@ -7,9 +7,15 @@ def test_create_schedule_api(client, db_session):
     schedule_data = {
         "name": "Тестовая рассылка",
         "description": "Каждый понедельник",
-        "schedule_type": "cron", 
-        "cron_expression": "0 10 * * 1",
-        "is_active": True
+        "schedule_config": {
+            "periodicity": "weekly",
+            "days": [1],  # понедельник (0=воскресенье, 1=понедельник, ...)
+            "hour": 10,
+            "minute": 0,
+            "timezone": "UTC"
+        },
+        "is_active": True,
+        "admin_timezone": "UTC"
     }
     
     response = client.post("/schedules/", json=schedule_data)

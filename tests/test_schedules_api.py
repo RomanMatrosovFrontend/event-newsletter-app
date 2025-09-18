@@ -19,8 +19,13 @@ class TestSchedulesAPI:
         schedule = NewsletterSchedule(
             name="Тестовая рассылка",
             description="Описание",
-            schedule_type="cron",
-            cron_expression="0 10 * * 1"
+            schedule_config={
+                "periodicity": "weekly",
+                "days": [1],
+                "hour": 10,
+                "minute": 0,
+                "timezone": "UTC"
+            }        
         )
         db_session.add(schedule)
         db_session.commit()
@@ -35,10 +40,14 @@ class TestSchedulesAPI:
     # GET /schedules/{id}
     def test_get_schedule_by_id_success(self, client, db_session):
         """GET /schedules/{id} - успешное получение"""
+        future_date = datetime.now() + timedelta(days=1)
         schedule = NewsletterSchedule(
             name="Конкретная рассылка",
-            schedule_type="date",
-            specific_date=datetime.now() + timedelta(days=1)
+            schedule_config={
+                "periodicity": "date",
+                "datetime": future_date.isoformat(),
+                "timezone": "UTC"
+            }
         )
         db_session.add(schedule)
         db_session.commit()
@@ -48,7 +57,8 @@ class TestSchedulesAPI:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["name"] == "Конкретная рассылка"
-        assert data["schedule_type"] == "date"
+        assert data["schedule_config"]["periodicity"] == "date"
+        assert data["schedule_config"]["datetime"] == future_date.isoformat()
     
     def test_get_schedule_by_id_not_found(self, client):
         """GET /schedules/{id} - расписание не найдено"""
@@ -61,9 +71,15 @@ class TestSchedulesAPI:
         schedule_data = {
             "name": "Еженедельная рассылка",
             "description": "Каждый понедельник в 10:00",
-            "schedule_type": "cron",
-            "cron_expression": "0 10 * * 1",
-            "is_active": True
+            "schedule_config": {
+                "periodicity": "weekly",
+                "days": [1],
+                "hour": 10,
+                "minute": 0,
+                "timezone": "UTC"
+            },
+            "is_active": True,
+            "admin_timezone": "UTC"
         }
         
         with patch('app.routes.schedules.schedule_job') as mock_schedule_job:
@@ -73,7 +89,14 @@ class TestSchedulesAPI:
             data = response.json()
             assert data["name"] == "Еженедельная рассылка"
             assert data["is_active"] is True
-            assert data["cron_expression"] == "0 10 * * 1"
+            
+            # Проверяем поля schedule_config
+            cfg = data["schedule_config"]
+            assert cfg["periodicity"] == "weekly"
+            assert cfg["days"] == [1]
+            assert cfg["hour"] == 10
+            assert cfg["minute"] == 0
+            assert cfg["timezone"] == "UTC"
             
             # Проверяем что задача была добавлена в планировщик
             mock_schedule_job.assert_called_once()
@@ -83,40 +106,39 @@ class TestSchedulesAPI:
         future_date = datetime.now() + timedelta(hours=2)
         schedule_data = {
             "name": "Разовая рассылка",
-            "description": "Завтра в полдень", 
-            "schedule_type": "date",
-            "specific_date": future_date.isoformat(),
-            "is_active": True
+            "description": "Завтра в полдень",
+            "schedule_config": {
+                "periodicity": "date",
+                "datetime": future_date.isoformat(),
+                "timezone": "UTC"
+            },
+            "is_active": True,
+            "admin_timezone": "UTC"
         }
-        
         with patch('app.routes.schedules.schedule_job'):
             response = client.post("/schedules/", json=schedule_data)
-            
+
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert data["name"] == "Разовая рассылка"
-            assert data["schedule_type"] == "date"
-    
-    def test_create_schedule_invalid_cron(self, client):
-        """POST /schedules/ - некорректный cron"""
-        schedule_data = {
-            "name": "Неверная рассылка",
-            "schedule_type": "cron",
-            "cron_expression": "invalid cron expression",
-            "is_active": True
-        }
-        
-        response = client.post("/schedules/", json=schedule_data)
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-    
+            cfg = data["schedule_config"]
+            assert cfg["periodicity"] == "date"
+            assert cfg["datetime"] == future_date.isoformat()
+            assert cfg["timezone"] == "UTC"
+
     def test_create_schedule_with_user_ids(self, client):
         """POST /schedules/ - с конкретными пользователями"""
         schedule_data = {
             "name": "Рассылка для избранных",
             "user_ids": [1, 2, 3],
-            "schedule_type": "cron",
-            "cron_expression": "0 12 * * *",
-            "is_active": True
+            "schedule_config": {
+                "periodicity": "cron",
+                "hour": 12,
+                "minute": 0,
+                "timezone": "UTC"
+            },
+            "is_active": True,
+            "admin_timezone": "UTC"
         }
         
         with patch('app.routes.schedules.schedule_job'):
@@ -125,14 +147,24 @@ class TestSchedulesAPI:
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert data["user_ids"] == [1, 2, 3]
-    
+            # Проверяем schedule_config
+            cfg = data["schedule_config"]
+            assert cfg["periodicity"] == "cron"
+            assert cfg["hour"] == 12
+            assert cfg["minute"] == 0
+            assert cfg["timezone"] == "UTC"    
+
     # PUT /schedules/{id}
     def test_update_schedule_success(self, client, db_session):
         """PUT /schedules/{id} - успешное обновление"""
         schedule = NewsletterSchedule(
             name="Старое название",
-            schedule_type="cron", 
-            cron_expression="0 10 * * 1",
+            schedule_config={
+                "periodicity": "cron",
+                "hour": 10,
+                "minute": 0,
+                "timezone": "UTC"
+            },
             is_active=True
         )
         db_session.add(schedule)
@@ -141,10 +173,15 @@ class TestSchedulesAPI:
         
         update_data = {
             "name": "Новое название",
-            "cron_expression": "0 12 * * 2",
+            "schedule_config": {
+                "periodicity": "cron",
+                "hour": 12,
+                "minute": 0,
+                "timezone": "UTC"
+            },
             "is_active": False
         }
-        
+       
         with patch('app.routes.schedules.scheduler') as mock_scheduler:
             mock_scheduler.get_job.return_value = MagicMock()
             mock_scheduler.remove_job.return_value = None
@@ -154,9 +191,13 @@ class TestSchedulesAPI:
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert data["name"] == "Новое название"
-            assert data["cron_expression"] == "0 12 * * 2"
             assert data["is_active"] is False
-    
+            cfg = data["schedule_config"]
+            assert cfg["periodicity"] == "cron"
+            assert cfg["hour"] == 12
+            assert cfg["minute"] == 0
+            assert cfg["timezone"] == "UTC"
+   
     def test_update_schedule_not_found(self, client):
         """PUT /schedules/{id} - расписание не найдено"""
         update_data = {"name": "Новое название"}
@@ -169,8 +210,12 @@ class TestSchedulesAPI:
         """DELETE /schedules/{id} - успешное удаление"""
         schedule = NewsletterSchedule(
             name="Удаляемая рассылка",
-            schedule_type="cron",
-            cron_expression="0 10 * * 1"
+            schedule_config={
+                "periodicity": "cron",
+                "hour": 10,
+                "minute": 0,
+                "timezone": "UTC"
+            }
         )
         db_session.add(schedule)
         db_session.commit()
@@ -198,8 +243,12 @@ class TestSchedulesAPI:
         """POST /schedules/{id}/run - ручной запуск"""
         schedule = NewsletterSchedule(
             name="Запускаемая рассылка",
-            schedule_type="cron",
-            cron_expression="0 10 * * 1"
+            schedule_config={
+                "periodicity": "cron",
+                "hour": 10,
+                "minute": 0,
+                "timezone": "UTC"
+            }
         )
         db_session.add(schedule)
         db_session.commit()
@@ -224,9 +273,14 @@ class TestSchedulesAPI:
         """POST /schedules/ - создание неактивного расписания"""
         schedule_data = {
             "name": "Неактивная рассылка",
-            "schedule_type": "cron",
-            "cron_expression": "0 10 * * 1", 
-            "is_active": False
+            "schedule_config": {
+                "periodicity": "cron",
+                "hour": 10,
+                "minute": 0,
+                "timezone": "UTC"
+            },
+            "is_active": False,
+            "admin_timezone": "UTC"
         }
         
         with patch('app.routes.schedules.schedule_job') as mock_schedule_job:
@@ -238,15 +292,19 @@ class TestSchedulesAPI:
             
             # Неактивное расписание не должно добавляться в планировщик
             mock_schedule_job.assert_not_called()
-    
+
     def test_get_schedules_pagination(self, client, db_session):
         """GET /schedules/ - тестирование пагинации"""
         # Создаем несколько расписаний
         for i in range(5):
             schedule = NewsletterSchedule(
                 name=f"Рассылка {i+1}",
-                schedule_type="cron",
-                cron_expression="0 10 * * 1"
+                schedule_config={
+                    "periodicity": "cron",
+                    "hour": 10,
+                    "minute": 0,
+                    "timezone": "UTC"
+                }
             )
             db_session.add(schedule)
         db_session.commit()
@@ -257,3 +315,4 @@ class TestSchedulesAPI:
         data = response.json()
         assert len(data) == 2
         assert data[0]["name"] == "Рассылка 3"  # skip=2, значит 3-й элемент первый
+

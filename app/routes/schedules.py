@@ -30,8 +30,15 @@ def get_schedule(schedule_id: int, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=schemas.Schedule)
 def create_schedule(schedule: schemas.ScheduleCreate, db: Session = Depends(get_db)):
-    # Если у вас есть правила валидации periodicity, days, etc. — здесь можно добавить
-    # По умолчанию — просто сохраняем данные
+    # Валидация schedule_config
+    cfg = schedule.schedule_config
+    if cfg.periodicity == "weekly" and not cfg.days:
+        raise HTTPException(status_code=422, detail="Days for weekly schedule not specified")
+    if cfg.periodicity == "date" and not cfg.datetime:
+        raise HTTPException(status_code=422, detail="Datetime for date schedule not specified")
+    if cfg.days_interval and cfg.days:
+        raise HTTPException(status_code=422, detail="Cannot specify both days_interval and days")
+
     db_schedule = models.NewsletterSchedule(**schedule.dict())
     db.add(db_schedule)
     db.commit()
@@ -47,14 +54,29 @@ def update_schedule(schedule_id: int, schedule_data: schemas.ScheduleUpdate, db:
     ).first()
     if not schedule:
         raise HTTPException(status_code=404, detail="Schedule not found")
+
     update_data = schedule_data.dict(exclude_unset=True)
+    # Валидация schedule_config при обновлении
+    if "schedule_config" in update_data:
+        cfg_data = update_data["schedule_config"]
+        cfg = schemas.ScheduleConfig(**cfg_data)
+        if cfg.periodicity == "weekly" and not cfg.days:
+            raise HTTPException(status_code=422, detail="Days for weekly schedule not specified")
+        if cfg.periodicity == "date" and not cfg.datetime:
+            raise HTTPException(status_code=422, detail="Datetime for date schedule not specified")
+        if cfg.days_interval and cfg.days:
+            raise HTTPException(status_code=422, detail="Cannot specify both days_interval and days")
+
     if 'name' in update_data and update_data['name'] is None:
         update_data.pop('name')
+
     for field, value in update_data.items():
         if value is not None:
             setattr(schedule, field, value)
+
     db.commit()
     db.refresh(schedule)
+
     job_id = f"schedule_{schedule.id}"
     if scheduler.get_job(job_id):
         scheduler.remove_job(job_id)
