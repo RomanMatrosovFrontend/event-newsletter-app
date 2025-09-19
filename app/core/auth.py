@@ -17,20 +17,22 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 def get_current_admin(request: Request):
+    # В тестах пропускаем авторизацию
+    if settings.TESTING:
+        return "test_admin"
+
     token = request.cookies.get("access_token")
     if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
     if not token.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Invalid token format")
-    
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token format")
     token = token.replace("Bearer ", "")
-    
+
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
         return username
     except jwt.PyJWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")

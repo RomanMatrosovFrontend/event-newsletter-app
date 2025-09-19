@@ -3,10 +3,19 @@ from unittest.mock import patch, MagicMock
 from fastapi import status
 from app.models import NewsletterSchedule
 from datetime import datetime, timedelta
+from app.routes import schedules
+from app.main import app
 
 class TestSchedulesAPI:
     """Полное тестирование всех эндпоинтов /schedules"""
     
+    @pytest.fixture(autouse=True)  # ← ДОБАВИТЬ
+    def _skip_auth(self):
+        """Переопределяем get_current_admin для всех методов класса"""
+        app.dependency_overrides[schedules.get_current_admin] = lambda request=None: "admin"
+        yield
+        app.dependency_overrides.pop(schedules.get_current_admin, None)
+
     # GET /schedules/
     def test_get_schedules_empty(self, client):
         """GET /schedules/ - пустой список"""

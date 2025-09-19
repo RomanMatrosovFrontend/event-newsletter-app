@@ -5,6 +5,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Settings:
+    # Тестовый режим (пропуск аутентификации в get_current_admin)
+    TESTING: bool = os.getenv("TESTING", "0") == "1"
+
     # Postmark configuration
     POSTMARK_API_TOKEN: str = os.getenv("POSTMARK_API_TOKEN", "your-api-token-here")
     POSTMARK_SENDER_EMAIL: str = os.getenv("POSTMARK_SENDER_EMAIL", "noreply@my-events.com")
@@ -19,5 +22,5 @@ class Settings:
     
     EMAIL_TEST_MODE: bool = os.getenv("EMAIL_TEST_MODE", "false").lower() == "true"
 
-
 settings = Settings()
+

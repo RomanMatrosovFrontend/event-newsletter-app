@@ -1,14 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from app.database import get_db
 from app import models, schemas
+from app.core.auth import get_current_admin
+from app.database import get_db
 from app.services.advanced_scheduler import scheduler, schedule_job
 
 router = APIRouter(tags=["schedules"])
 
 @router.get("/", response_model=List[schemas.Schedule])
-def get_schedules(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def get_schedules(
+    skip: int = 0, 
+    limit: int = 100, 
+    db: Session = Depends(get_db),
+    current_admin: str = Depends(get_current_admin)  # ← ДОБАВИТЬ
+):
     schedules = db.query(models.NewsletterSchedule).offset(skip).limit(limit).all()
     result = []
     for schedule in schedules:
@@ -20,7 +26,11 @@ def get_schedules(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
     return result
 
 @router.get("/{schedule_id}", response_model=schemas.Schedule)
-def get_schedule(schedule_id: int, db: Session = Depends(get_db)):
+def get_schedule(
+    schedule_id: int, 
+    db: Session = Depends(get_db),
+    current_admin: str = Depends(get_current_admin)  # ← ДОБАВИТЬ
+):
     schedule = db.query(models.NewsletterSchedule).filter(
         models.NewsletterSchedule.id == schedule_id
     ).first()
@@ -29,7 +39,11 @@ def get_schedule(schedule_id: int, db: Session = Depends(get_db)):
     return schedule
 
 @router.post("/", response_model=schemas.Schedule)
-def create_schedule(schedule: schemas.ScheduleCreate, db: Session = Depends(get_db)):
+def create_schedule(
+    schedule: schemas.ScheduleCreate, 
+    db: Session = Depends(get_db),
+    current_admin: str = Depends(get_current_admin)  # ← ДОБАВИТЬ
+):
     # Валидация schedule_config
     cfg = schedule.schedule_config
     if cfg.periodicity == "weekly" and not cfg.days:
@@ -48,7 +62,12 @@ def create_schedule(schedule: schemas.ScheduleCreate, db: Session = Depends(get_
     return db_schedule
 
 @router.put("/{schedule_id}", response_model=schemas.Schedule)
-def update_schedule(schedule_id: int, schedule_data: schemas.ScheduleUpdate, db: Session = Depends(get_db)):
+def update_schedule(
+    schedule_id: int, 
+    schedule_data: schemas.ScheduleUpdate, 
+    db: Session = Depends(get_db),
+    current_admin: str = Depends(get_current_admin)  # ← ДОБАВИТЬ
+):
     schedule = db.query(models.NewsletterSchedule).filter(
         models.NewsletterSchedule.id == schedule_id
     ).first()
@@ -85,7 +104,11 @@ def update_schedule(schedule_id: int, schedule_data: schemas.ScheduleUpdate, db:
     return schedule
 
 @router.delete("/{schedule_id}")
-def delete_schedule(schedule_id: int, db: Session = Depends(get_db)):
+def delete_schedule(
+    schedule_id: int, 
+    db: Session = Depends(get_db),
+    current_admin: str = Depends(get_current_admin)  # ← ДОБАВИТЬ
+):
     schedule = db.query(models.NewsletterSchedule).filter(
         models.NewsletterSchedule.id == schedule_id
     ).first()
@@ -99,7 +122,11 @@ def delete_schedule(schedule_id: int, db: Session = Depends(get_db)):
     return {"message": "Schedule deleted successfully"}
 
 @router.post("/{schedule_id}/run")
-def run_schedule_now(schedule_id: int, db: Session = Depends(get_db)):
+def run_schedule_now(
+    schedule_id: int, 
+    db: Session = Depends(get_db),
+    current_admin: str = Depends(get_current_admin)  # ← ДОБАВИТЬ
+):
     schedule = db.query(models.NewsletterSchedule).filter(
         models.NewsletterSchedule.id == schedule_id
     ).first()

@@ -2,10 +2,21 @@
 
 import pytest
 from fastapi import status
+from app.routes import schedules
+from app.main import app
+
+@pytest.fixture(autouse=True)
+def _skip_auth_schedules():
+    """
+    Переопределяем get_current_admin для всех тестов в этом модуле,
+    чтобы /schedules/* работали без 401.
+    """
+    app.dependency_overrides[schedules.get_current_admin] = lambda request=None: "admin"
+    yield
+    app.dependency_overrides.pop(schedules.get_current_admin, None)
 
 class TestScheduleConfigValidation:
     """Validation tests for schedule_config in /schedules endpoints."""
-
     @pytest.mark.parametrize("payload,missing_field", [
         (
             {

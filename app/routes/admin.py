@@ -248,7 +248,10 @@ async def create_admin(
     return {"status": "success", "message": f"Admin {request.username} created"}
 
 @router.get("/count", response_model=EventCountResponse)
-async def get_events_count(db: Session = Depends(get_db)) -> EventCountResponse:
+async def get_events_count(
+    db: Session = Depends(get_db),
+    current_admin: str = Depends(get_current_admin)
+) -> EventCountResponse:
     """Получение общего количества событий"""
     count = db.query(models.Event).count()
     return EventCountResponse(count=count)

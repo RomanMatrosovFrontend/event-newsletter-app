@@ -49,7 +49,7 @@ class TestAdminAPI:
         assert cookie in ["", '""', None] or "max-age=1" in str(response.headers.get("set-cookie"))
     
     # POST /admin/newsletter/ - Исправленные тесты с авторизацией
-    @patch('app.routes.admin.get_current_admin', return_value='admin')
+    @patch('app.core.auth.get_current_admin', return_value='admin')
     def test_send_newsletter_success(self, mock_auth, client, db_session):
         """POST /admin/newsletter/ - успешная отправка рассылки"""
         # Создаем пользователей для рассылки
@@ -66,7 +66,7 @@ class TestAdminAPI:
             assert data["status"] == "started"
             assert data["total_users"] == 2
     
-    @patch('app.routes.admin.get_current_admin', return_value='admin')
+    @patch('app.core.auth.get_current_admin', return_value='admin')
     def test_send_newsletter_no_users(self, mock_auth, client, db_session):
         """POST /admin/newsletter/ - нет пользователей"""
         response = client.post("/admin/newsletter/")
@@ -83,7 +83,7 @@ class TestAdminAPI:
         assert response.status_code in [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
     
     # GET /admin/newsletter/logs/ - Исправленные тесты
-    @patch('app.routes.admin.get_current_admin', return_value='admin')
+    @patch('app.core.auth.get_current_admin', return_value='admin')
     def test_get_newsletter_logs(self, mock_auth, client, db_session):
         """GET /admin/newsletter/logs/ - получение логов"""
         response = client.get("/admin/newsletter/logs/")
@@ -99,7 +99,7 @@ class TestAdminAPI:
             data = response.json()
             assert isinstance(data, list)
     
-    @patch('app.routes.admin.get_current_admin', return_value='admin')
+    @patch('app.core.auth.get_current_admin', return_value='admin')
     def test_get_newsletter_logs_pagination(self, mock_auth, client):
         """GET /admin/newsletter/logs/ - пагинация логов"""
         response = client.get("/admin/newsletter/logs/?skip=5&limit=10")
@@ -155,7 +155,7 @@ class TestAdminAPI:
             assert "@example.com" in call_args[1]["to_email"]
     
     # Исправленный интеграционный тест
-    @patch('app.routes.admin.get_current_admin', return_value='admin')
+    @patch('app.core.auth.get_current_admin', return_value='admin')
     @patch('app.routes.admin.send_email_via_postmark')
     @patch('app.routes.admin.get_events_for_user')
     def test_full_newsletter_workflow(self, mock_get_events, mock_send_email, mock_auth, client, db_session):
