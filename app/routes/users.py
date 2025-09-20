@@ -191,6 +191,7 @@ def read_user_by_email(
         categories=categories,
         cities=cities,
         subscription_types=subscription_types,
+        is_subscribed=db_user.is_subscribed,
         created_at=db_user.created_at,
         updated_at=db_user.updated_at
     )

@@ -1,4 +1,5 @@
 # app/routes/subscribe.py
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
@@ -17,8 +18,9 @@ async def subscribe(
         db_user = db.query(models.User).filter(
             models.User.email == subscribe_data.email
         ).first()
-
         if db_user:
+            # Отмечаем пользователя как подписанного
+            db_user.is_subscribed = True
             # Удаляем старые категории, города и типы рассылки
             db.execute(
                 models.user_categories.delete().where(
@@ -35,7 +37,6 @@ async def subscribe(
                     models.user_subscription_types.c.user_id == db_user.id
                 )
             )
-
             # Добавляем новые категории и города
             for category in subscribe_data.categories:
                 db.execute(
@@ -51,10 +52,8 @@ async def subscribe(
                         city=city.strip()
                     )
                 )
-
             # Добавляем новые типы рассылки
             for sub_type in subscribe_data.subscription_types:
-                # Ищем или создаём тип подписки
                 st = db.query(models.SubscriptionType).filter(
                     models.SubscriptionType.code == sub_type
                 ).first()
@@ -69,20 +68,19 @@ async def subscribe(
                         subscription_type_id=st.id
                     )
                 )
-
             db.commit()
             return {
                 "status": "success",
                 "message": "User categories updated successfully"
             }
         else:
-            # Пользователь не существует — создаём нового
+            # Пользователь не существует — создаём нового и подписываем
             db_user = models.User(email=subscribe_data.email)
+            db_user.is_subscribed = True
             db.add(db_user)
             db.commit()
             db.refresh(db_user)
-
-            # Добавляем категории, города и типы рассылки
+            # Добавляем категории и города
             for category in subscribe_data.categories:
                 db.execute(
                     models.user_categories.insert().values(
@@ -112,13 +110,11 @@ async def subscribe(
                         subscription_type_id=st.id
                     )
                 )
-
             db.commit()
             return {
                 "status": "success",
                 "message": "User created and subscribed successfully"
             }
-
     except Exception as e:
         db.rollback()
         raise HTTPException(

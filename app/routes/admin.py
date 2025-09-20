@@ -102,6 +102,11 @@ async def send_newsletter_to_user(user_id: int):
         if not user:
             logger.warning(f"User not found: {user_id}")
             return
+
+        # Пропускаем отписавшихся
+        if not user.is_subscribed:
+            logger.info(f"User unsubscribed, skip: {user.email}")
+            return
         
         events = get_events_for_user(db, user)
         if not events:
@@ -132,6 +137,15 @@ async def events_manager_page(
     """Страница управления событиями для админов"""
     return templates.TemplateResponse("events-manager.html", {"request": request})
 
+@router.get("/users-manager", response_class=HTMLResponse)
+async def users_manager_page(
+    request: Request,
+    current_admin: AdminUser = Depends(get_current_admin)
+):
+    """Страница управления пользователями для админов"""
+    return templates.TemplateResponse("users-manager.html", {"request": request})
+
+
 @router.post("/newsletter/", response_model=Dict)
 async def send_newsletter_to_all_users(
     background_tasks: BackgroundTasks,
@@ -139,7 +153,7 @@ async def send_newsletter_to_all_users(
     username: str = Depends(get_current_admin)  # <--- Защита
 ):
     try:
-        users = db.query(models.User).all()
+        users = users = db.query(models.User).filter(models.User.is_subscribed == True).all()
         if not users:
             return {"status": "error", "message": "No users found"}
         

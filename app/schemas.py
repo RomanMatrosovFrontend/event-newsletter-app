@@ -6,6 +6,7 @@ class UserBase(BaseModel):
     email: EmailStr
     categories: List[str] = []
     cities: List[str] = []
+    is_subscribed: bool
 
 class UserCreate(UserBase):
     pass
