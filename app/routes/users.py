@@ -56,6 +56,7 @@ def create_user(
     return schemas.User(
         id=db_user.id,
         email=db_user.email,
+        is_subscribed=db_user.is_subscribed,
         categories=categories,
         cities=cities,
         subscription_types=subscription_types,
@@ -101,6 +102,7 @@ def read_users(
             schemas.User(
                 id=u.id,
                 email=u.email,
+                is_subscribed=u.is_subscribed,
                 categories=categories,
                 cities=cities,
                 subscription_types=subscription_types,
@@ -146,6 +148,7 @@ def read_user(
     return schemas.User(
         id=db_user.id,
         email=db_user.email,
+        is_subscribed=db_user.is_subscribed,
         categories=categories,
         cities=cities,
         subscription_types=subscription_types,
@@ -188,10 +191,10 @@ def read_user_by_email(
     return schemas.User(
         id=db_user.id,
         email=db_user.email,
+        is_subscribed=db_user.is_subscribed,
         categories=categories,
         cities=cities,
         subscription_types=subscription_types,
-        is_subscribed=db_user.is_subscribed,
         created_at=db_user.created_at,
         updated_at=db_user.updated_at
     )
@@ -228,6 +231,9 @@ def update_user(
                     category=category
                 )
             )
+    if user.is_subscribed is not None:
+      db_user.is_subscribed = user.is_subscribed
+
     db.commit()
     db.refresh(db_user)
     categories = [
@@ -256,6 +262,7 @@ def update_user(
     return schemas.User(
         id=db_user.id,
         email=db_user.email,
+        is_subscribed=db_user.is_subscribed,
         categories=categories,
         cities=cities,
         subscription_types=subscription_types,
@@ -323,6 +330,7 @@ def update_user_by_email(
     return schemas.User(
         id=db_user.id,
         email=db_user.email,
+        is_subscribed=db_user.is_subscribed,
         categories=categories,
         cities=cities,
         subscription_types=subscription_types,

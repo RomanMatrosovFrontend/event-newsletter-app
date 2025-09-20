@@ -118,15 +118,16 @@ class TestUsersAPI:
         """POST /users/ - успешное создание с категориями"""
         user_data = {
             "email": "new@example.com",
-            "categories": ["tech", "music"]
+            "categories": ["tech", "music"],
+            "is_subscribed": True
         }
-
         response = client.post("/users/", json=user_data)
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["email"] == "new@example.com"
         assert "tech" in data["categories"]
         assert "music" in data["categories"]
+        assert data["is_subscribed"] is True
         assert "id" in data
         assert "created_at" in data
         assert "updated_at" in data
@@ -134,27 +135,29 @@ class TestUsersAPI:
     def test_create_user_minimal(self, client):
         """POST /users/ - только email"""
         user_data = {
-            "email": "minimal@example.com"
+            "email": "minimal@example.com",
+            "is_subscribed": True
         }
-
         response = client.post("/users/", json=user_data)
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["email"] == "minimal@example.com"
         assert data["categories"] == []
+        assert data["is_subscribed"] is True
 
     def test_create_user_empty_categories(self, client):
         """POST /users/ - с пустым списком категорий"""
         user_data = {
             "email": "empty_cat@example.com",
-            "categories": []
+            "categories": [],
+            "is_subscribed": True
         }
-
         response = client.post("/users/", json=user_data)
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["email"] == "empty_cat@example.com"
         assert data["categories"] == []
+        assert data["is_subscribed"] is True
 
     def test_create_user_duplicate_email(self, client, db_session):
         """POST /users/ - дублирование email"""
@@ -164,7 +167,8 @@ class TestUsersAPI:
 
         user_data = {
             "email": "duplicate@example.com",
-            "categories": ["tech"]
+            "categories": ["tech"],
+            "is_subscribed": True
         }
 
         response = client.post("/users/", json=user_data)
@@ -288,13 +292,13 @@ class TestUsersAPI:
         """Тест пользователя с множественными категориями"""
         user_data = {
             "email": "multicategory@example.com",
-            "categories": ["tech", "music", "sports", "culture"]
+            "categories": ["tech", "music", "sports", "culture"],
+            "is_subscribed": True
         }
-
         response = client.post("/users/", json=user_data)
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
-
+        assert data["is_subscribed"] is True
         assert len(data["categories"]) == 4
         for category in ["tech", "music", "sports", "culture"]:
             assert category in data["categories"]
@@ -303,16 +307,14 @@ class TestUsersAPI:
         """Проверка что порядок категорий не важен"""
         user_data = {
             "email": "order_test@example.com",
-            "categories": ["music", "tech", "sports"]
+            "categories": ["music", "tech", "sports"],
+            "is_subscribed": True
         }
-
         response = client.post("/users/", json=user_data)
         user_id = response.json()["id"]
-
         update_data = {
             "categories": ["tech", "sports", "music"]
         }
-
         response = client.put(f"/users/{user_id}", json=update_data)
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -324,37 +326,37 @@ class TestUsersAPI:
         """Очистка всех категорий пользователя"""
         user_data = {
             "email": "clear_test@example.com",
-            "categories": ["tech", "music"]
+            "categories": ["tech", "music"],
+            "is_subscribed": True
         }
-
         response = client.post("/users/", json=user_data)
+        assert response.status_code == status.HTTP_200_OK
         user_id = response.json()["id"]
-
         update_data = {
             "categories": []
         }
-
         response = client.put(f"/users/{user_id}", json=update_data)
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["categories"] == []
 
+
     def test_user_timestamps(self, client):
         """Проверка автоматических timestamp полей"""
         user_data = {
             "email": "timestamp@example.com",
-            "categories": ["tech"]
+            "categories": ["tech"],
+            "is_subscribed": True
         }
-
         response = client.post("/users/", json=user_data)
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
-
         assert "created_at" in data
         assert "updated_at" in data
         from datetime import datetime
         created_at = datetime.fromisoformat(data["created_at"].replace('Z', '+00:00'))
         assert created_at is not None
+
 
     # PUT /users/email/{email}
     def test_update_user_by_email_success(self, client, db_session):

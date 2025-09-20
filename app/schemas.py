@@ -16,6 +16,7 @@ class UserUpdate(BaseModel):
     categories: Optional[List[str]] = None
     cities: Optional[List[str]] = None
     subscription_types: Optional[List[str]] = None
+    is_subscribed: Optional[bool] = None
 
     class Config:
         from_attributes = True
