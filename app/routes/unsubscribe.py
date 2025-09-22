@@ -35,3 +35,18 @@ async def unsubscribe_by_email(
     db.commit()
     return {"message": "Successfully unsubscribed"}
 
+@router.get("/token/{unsubscribe_token}", response_model=schemas.Message)
+async def unsubscribe_by_token(
+    unsubscribe_token: str,
+    db: Session = Depends(get_db)
+):
+    """Отписка от рассылки по одноразовому токену"""
+    user = db.query(models.User).filter(
+        models.User.unsubscribe_token == unsubscribe_token
+    ).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.is_subscribed = False
+    db.commit()
+    return {"message": "You have been successfully unsubscribed"}
+

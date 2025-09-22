@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer, String, JSON, Text, DateTime, Table, ForeignKey, Boolean, Float
+from sqlalchemy import Column, Integer, String, JSON, Text, DateTime, Table, ForeignKey, Boolean, Float, event
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from werkzeug.security import generate_password_hash, check_password_hash
+import uuid
+
 from app.database import Base
 
 # Таблица для связи многие-ко-многим пользователей и категорий
@@ -37,7 +39,12 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     subscription_types = relationship("SubscriptionType", secondary=user_subscription_types, backref="users")
+    unsubscribe_token = Column(String, unique=True, default=lambda: str(uuid4()))
 
+@event.listens_for(User, 'before_insert')
+def generate_unsubscribe_token(mapper, connection, target):
+    if not target.unsubscribe_token:
+        target.unsubscribe_token = str(uuid.uuid4())
 
 class Event(Base):
     __tablename__ = "events"

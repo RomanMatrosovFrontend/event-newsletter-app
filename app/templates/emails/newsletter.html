@@ -2,184 +2,159 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Анонс мероприятий для вас</title>
-    <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        @media only screen and (max-width: 600px) {
-            .container {
-                width: 100% !important;
-                padding: 0 10px !important;
-            }
-            .header {
-                padding: 16px !important;
-            }
-            .content {
-                padding: 20px 16px !important;
-            }
-            .footer {
-                padding: 12px 16px !important;
-            }
-            .decorative-circles {
-                display: none !important;
-            }
-        }
-    </style>
 </head>
-<body style="font-family: 'Geologica', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #f7f7f7 0%, #f0f4ff 100%); line-height: 1.6;">
-    <!-- Заголовок с фирменными цветами -->
-    <div class="header" style="background: linear-gradient(135deg, #4430AA 0%, #5F58AA 50%, #4430AA 100%); color: #fff; padding: 32px 20px; text-align: center; position: relative; overflow: hidden;">
-        <!-- Больше декоративных элементов -->
-        <div class="decorative-circles" style="position: absolute; top: -20px; right: -10px; width: 80px; height: 80px; background: radial-gradient(circle, #FF4D53 0%, #ff6b70 100%); border-radius: 50%; opacity: 0.4;"></div>
-        <div class="decorative-circles" style="position: absolute; bottom: -15px; left: -5px; width: 50px; height: 50px; background: radial-gradient(circle, #FFBD00 0%, #ffd633 100%); border-radius: 50%; opacity: 0.5;"></div>
-        <div class="decorative-circles" style="position: absolute; top: 20px; left: 15%; width: 30px; height: 30px; background: #92C4FF; border-radius: 50%; opacity: 0.6;"></div>
-        <div class="decorative-circles" style="position: absolute; bottom: 25px; right: 20%; width: 25px; height: 25px; background: #FF4D53; border-radius: 50%; opacity: 0.4;"></div>
-        
-        <!-- Логотип с цветной подложкой -->
-        <div style="background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(146, 196, 255, 0.2) 100%); padding: 16px 32px; border-radius: 12px; display: inline-block; margin-bottom: 12px; border: 2px solid rgba(255,255,255,0.1);">
-            <h1 style="margin: 0; font-size: 32px; font-weight: 700; letter-spacing: 3px; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                MONTE MOOD
-            </h1>
-        </div>
-        
-        <!-- Цветная полоска под логотипом -->
-        <div style="width: 120px; height: 4px; background: linear-gradient(90deg, #FF4D53 0%, #FFBD00 50%, #92C4FF 100%); margin: 8px auto 12px auto; border-radius: 2px;"></div>
-        
-        <p style="margin: 0; font-size: 16px; opacity: 0.95; font-weight: 400; color: #fff;">
-            Самые яркие мероприятия Черногории ✨
-        </p>
-    </div>
-    
-    <!-- Основной контент -->
-    <div class="content" style="background: #fff; padding: 32px 24px; color: #333; border-top: 4px solid #92C4FF;">
-        <!-- Приветствие с яркими акцентами -->
-        <div style="margin-bottom: 28px; padding: 24px; background: linear-gradient(135deg, #92C4FF 0%, rgba(146, 196, 255, 0.15) 100%); border-radius: 16px; border-left: 6px solid #4430AA; position: relative; overflow: hidden;">
-            <!-- Декоративные элементы в приветствии -->
-            <div style="position: absolute; top: -10px; right: -10px; width: 40px; height: 40px; background: radial-gradient(circle, #FFBD00 0%, rgba(255, 189, 0, 0.3) 100%); border-radius: 50%;"></div>
-            <div style="position: absolute; bottom: -5px; left: -5px; width: 20px; height: 20px; background: #FF4D53; border-radius: 50%; opacity: 0.6;"></div>
-            
-            <p style="margin: 0; font-size: 22px; font-weight: 600; color: #4430AA; position: relative; z-index: 1;">
-                Привет, {{ name }}! 👋
-            </p>
-            <p style="font-size: 17px; color: #666; margin: 10px 0 0 0; line-height: 1.6; position: relative; z-index: 1;">
-                Мы подобрали для вас интересные события. До встречи!
-            </p>
-        </div>
-        
-        <!-- События с цветными акцентами -->
-        <div style="margin: 24px 0;">
-            {% for event in events %}
-            <div style="border: 1px solid #f0f0f0; border-radius: 16px; margin-bottom: 24px; overflow: hidden; box-shadow: 0 4px 12px rgba(68, 48, 170, 0.12); position: relative; background: #fff;">
-                <!-- Цветная полоска сверху карточки -->
-                <div style="height: 4px; background: linear-gradient(90deg, #4430AA 0%, #FF4D53 50%, #FFBD00 100%);"></div>
-                
-                {% if event.photo %}
-                <div style="position: relative; overflow: hidden;">
-                    <img src="{{ event.photo }}" alt="{{ event.title }}" style="width: 100%; height: 220px; object-fit: cover; display: block;">
-                    <!-- Цветная метка с градиентом -->
-                    <div style="position: absolute; top: 16px; right: 16px; background: linear-gradient(135deg, #4430AA 0%, #5F58AA 100%); color: #fff; padding: 8px 16px; border-radius: 25px; font-size: 12px; font-weight: 600; box-shadow: 0 2px 8px rgba(68, 48, 170, 0.3);">
-                        {{ event.mark }}
-                    </div>
-                    <!-- Декоративный элемент на фото -->
-                    <div style="position: absolute; bottom: 16px; left: 16px; width: 12px; height: 12px; background: #FFBD00; border-radius: 50%; box-shadow: 0 0 0 3px rgba(255, 189, 0, 0.3);"></div>
-                </div>
-                {% endif %}
-                
-                <div style="padding: 24px; position: relative;">
-                    <!-- Декоративный элемент в карточке -->
-                    <div style="position: absolute; top: -8px; right: 20px; width: 16px; height: 16px; background: #92C4FF; border-radius: 50%; opacity: 0.7;"></div>
-                    
-                    <a href="{{ event.url }}" style="color: #4430AA; font-weight: 700; font-size: 19px; text-decoration: none; display: block; margin-bottom: 14px; line-height: 1.4; transition: all 0.3s;">
-                        {{ event.title }}
-                    </a>
-                    
-                    {% if event.description %}
-                    <p style="margin: 0 0 16px 0; color: #666; font-size: 15px; line-height: 1.6;">
-                        {{ event.description }}
-                    </p>
-                    {% endif %}
-                    
-                    {% if event.city %}
-                    <!-- Цветная метка для города -->
-                    <div style="display: inline-flex; align-items: center; background: linear-gradient(135deg, #FF4D53 0%, rgba(255, 77, 83, 0.1) 100%); padding: 8px 16px; border-radius: 25px; margin-top: 12px; border: 1px solid rgba(255, 77, 83, 0.2);">
-                        <span style="color: #FF4D53; margin-right: 8px; font-size: 14px; font-weight: 600;">📍</span>
-                        <span style="color: #4430AA; font-size: 14px; font-weight: 600;">{{ event.city }}</span>
-                    </div>
-                    {% endif %}
-                </div>
-                
-                <!-- Цветная нижняя граница -->
-                <div style="height: 2px; background: linear-gradient(90deg, transparent 0%, #92C4FF 50%, transparent 100%);"></div>
-            </div>
-            {% else %}
-            <!-- Яркое оформление для пустого состояния -->
-            <div style="text-align: center; padding: 48px 24px; background: linear-gradient(135deg, #f8f9fa 0%, rgba(146, 196, 255, 0.05) 100%); border-radius: 20px; border: 3px dashed #92C4FF; position: relative; overflow: hidden;">
-                <!-- Декоративные элементы -->
-                <div style="position: absolute; top: 10px; left: 20px; width: 20px; height: 20px; background: #FFBD00; border-radius: 50%; opacity: 0.4;"></div>
-                <div style="position: absolute; bottom: 15px; right: 25px; width: 16px; height: 16px; background: #FF4D53; border-radius: 50%; opacity: 0.5;"></div>
-                
-                <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.4;">🎪</div>
-                <p style="margin: 0 0 8px 0; color: #4430AA; font-size: 18px; font-weight: 600;">
-                    Пока нет подходящих событий
-                </p>
-                <p style="margin: 0; color: #666; font-size: 15px;">
-                    Ждите новые анонсы!
-                </p>
-                
-                <!-- Цветная полоска -->
-                <div style="width: 80px; height: 3px; background: linear-gradient(90deg, #FF4D53 0%, #FFBD00 50%, #92C4FF 100%); margin: 16px auto 0 auto; border-radius: 2px;"></div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    
-    <!-- Подвал с яркими акцентами -->
-    <div class="footer" style="background: linear-gradient(135deg, #f7f7f7 0%, #f0f4ff 100%); padding: 24px 24px; text-align: center; position: relative; overflow: hidden;">
-        <!-- Декоративные элементы в подвале -->
-        <div style="position: absolute; top: -15px; left: 10%; width: 30px; height: 30px; background: radial-gradient(circle, #92C4FF 0%, rgba(146, 196, 255, 0.3) 100%); border-radius: 50%;"></div>
-        <div style="position: absolute; bottom: -10px; right: 15%; width: 25px; height: 25px; background: #FFBD00; border-radius: 50%; opacity: 0.4;"></div>
-        
-        <div style="margin-bottom: 20px;">
-            <!-- Яркая кнопка отписки -->
-            <a href="https://event-newsletter-app.onrender.com/api/unsubscribe/" 
-               style="display: inline-block; 
-                      background: linear-gradient(135deg, #FF4D53 0%, #ff6b70 50%, #FF4D53 100%); 
-                      color: #fff; 
-                      text-decoration: none; 
-                      padding: 14px 32px; 
-                      border-radius: 30px; 
-                      font-weight: 600; 
-                      font-size: 15px;
-                      box-shadow: 0 4px 12px rgba(255, 77, 83, 0.4);
-                      border: 2px solid rgba(255,255,255,0.2);
-                      position: relative;
-                      z-index: 1;">
-                Отписаться от рассылки
-            </a>
-        </div>
-        
-        <!-- Разделитель с градиентом -->
-        <div style="height: 2px; background: linear-gradient(90deg, transparent 0%, #4430AA 25%, #FF4D53 50%, #FFBD00 75%, transparent 100%); margin: 20px auto; border-radius: 1px; width: 200px;"></div>
-        
-        <div style="padding-top: 16px; position: relative; z-index: 1;">
-            <p style="margin: 0 0 12px 0; color: #4430AA; font-weight: 600; font-size: 16px;">
-                С заботой, команда MONTE MOOD
-            </p>
-            
-            <!-- Увеличенные цветные точки -->
-            <div style="display: flex; justify-content: center; gap: 12px; margin: 12px 0;">
-                <span style="width: 10px; height: 10px; background: linear-gradient(135deg, #FFBD00 0%, #ffd633 100%); border-radius: 50%; display: inline-block; box-shadow: 0 2px 4px rgba(255, 189, 0, 0.3);"></span>
-                <span style="width: 10px; height: 10px; background: linear-gradient(135deg, #FF4D53 0%, #ff6b70 100%); border-radius: 50%; display: inline-block; box-shadow: 0 2px 4px rgba(255, 77, 83, 0.3);"></span>
-                <span style="width: 10px; height: 10px; background: linear-gradient(135deg, #92C4FF 0%, #a8d0ff 100%); border-radius: 50%; display: inline-block; box-shadow: 0 2px 4px rgba(146, 196, 255, 0.3);"></span>
-                <span style="width: 10px; height: 10px; background: linear-gradient(135deg, #4430AA 0%, #5F58AA 100%); border-radius: 50%; display: inline-block; box-shadow: 0 2px 4px rgba(68, 48, 170, 0.3);"></span>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Копирайт с цветным акцентом -->
-    <div style="padding: 16px 20px; font-size: 12px; color: #666; text-align: center; background: linear-gradient(135deg, #f0f0f0 0%, #f8f9fa 100%); border-top: 1px solid #92C4FF;">
-        © {{ now.year }} <span style="color: #4430AA; font-weight: 600;">MONTE MOOD</span>. Все права защищены.
-    </div>
+<body style="font-family: Tahoma, Verdana, Arial, sans-serif; background-color: #f8f8f8; margin: 0; padding: 0; line-height: 1.6;">
+    <!-- Основная таблица (контейнер) -->
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+            <td align="center" valign="top">
+                <table border="0" cellpadding="0" cellspacing="0" width="600" style="width: 600px; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                    <!-- Шапка с градиентом -->
+                    <tr>
+                        <td style="background-repeat: repeat-x; background-image: url('https://placehold.co/600x100/4430AA/5F58AA?text=%20'); height: 10px;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background-repeat: repeat-x; background-image: url('https://placehold.co/600x100/5F58AA/4430AA?text=%20'); height: 10px;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background-color: #4430AA; padding-top: 12px; padding-bottom: 12px; text-align: center;">
+                            <!-- Декоративные точки -->
+                            <table border="0" cellpadding="0" cellspacing="0" align="center">
+                                <tr>
+                                    <td style="width: 12px; height: 12px; background-color: #92C4FF; border-radius: 50%;"></td>
+                                    <td style="width: 12px; height: 12px; background-color: #FF4D53; border-radius: 50%;">&nbsp;</td>
+                                    <td style="width: 12px; height: 12px; background-color: #FFBD00; border-radius: 50%;">&nbsp;</td>
+                                    <td style="width: 12px; height: 12px; background-color: #4430AA; border-radius: 50%;">&nbsp;</td>
+                                </tr>
+                            </table>
+                            <!-- Логотип с фоном -->
+                            <table border="0" cellpadding="0" cellspacing="0" style="background-color: rgba(255, 255, 255, 0.2); display: inline-block; border-radius: 12px; border: 2px solid rgba(255, 255, 255, 0.2); margin: 12px 0; padding: 12px 24px;">
+                                <tr>
+                                    <td align="center" style="color: #ffffff; font-size: 32px; font-weight: bold;">MONTE MOOD</td>
+                                </tr>
+                            </table>
+                            <!-- Полоска под логотипом -->
+                            <table border="0" cellpadding="0" cellspacing="0" width="120" style="margin: 4px auto;">
+                                <tr>
+                                    <td height="4" style="background-color: #FF4D53;"></td>
+                                    <td height="4" style="background-color: #FFBD00;"></td>
+                                    <td height="4" style="background-color: #92C4FF;"></td>
+                                </tr>
+                            </table>
+                            <!-- Подпись -->
+                            <p style="margin: 4px 0 24px; font-size: 16px; color: #ffffff; font-weight: 400;">Самые яркие мероприятия Черногории ✨</p>
+                        </td>
+                    </tr>
+                    <!-- Основной контент -->
+                    <tr>
+                        <td style="background-color: #ffffff; padding: 24px 20px; border-top: 4px solid #92C4FF;">
+                            <!-- Приветствие -->
+                            <table border="0" cellpadding="0" cellspacing="0" style="background-color: #f0f7ff; border-left: 6px solid #4430AA; border-radius: 12px; margin-bottom: 24px; margin-top: 12px;">
+                                <tr>
+                                    <td style="padding: 16px 20px;">
+                                        <p style="margin: 0 0 8px; font-size: 22px; font-weight: bold; color: #4430AA;">Привет, {{ name }}! 👋</p>
+                                        <p style="margin: 0; font-size: 17px; color: #666666;">Мы подобрали для вас интересные события. До встречи!</p>
+                                    </td>
+                                </tr>
+                            </table>
+                            <!-- События -->
+                            {% for event in events %}
+                            <table border="0" cellpadding="0" cellspacing="0" style="width: 100%; margin-bottom: 24px; border: 1px solid #f0f0f0; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(68, 48, 170, 0.1);">
+                                <tr>
+                                    <td colspan="3" height="4" style="background-color: #4430AA;"></td>
+                                    <td height="4" style="background-color: #FF4D53;"></td>
+                                    <td height="4" style="background-color: #FFBD00;"></td>
+                                </tr>
+                                {% if event.photo %}
+                                <tr>
+                                    <td colspan="5" style="padding: 0; background-color: #f0f0f0;">
+                                        <img src="{{ event.photo }}" alt="{{ event.title }}" width="600" height="220" style="display: block; width: 100%; height: auto; border: 0;">
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td style="width: 24px;"></td>
+                                    <td colspan="3" style="padding: 16px 0; vertical-align: top;">
+                                        <p style="margin: 0 0 12px; font-size: 19px; color: #4430AA; font-weight: bold;">
+                                            <a href="{{ event.url }}" style="color: #4430AA; text-decoration: none;">{{ event.title }}</a>
+                                        </p>
+                                        {% if event.description %}
+                                        <p style="margin: 0 0 16px; font-size: 15px; color: #666666; line-height: 1.5;">{{ event.description }}</p>
+                                        {% endif %}
+                                    </td>
+                                    <td style="width: 24px;"></td>
+                                </tr>
+                                {% if event.city %}
+                                <tr>
+                                    <td style="width: 24px;"></td>
+                                    <td colspan="3" style="padding: 0 0 16px;">
+                                        <table border="0" cellpadding="0" cellspacing="0" style="background-color: #ffecec; border-radius: 20px; margin-top: 4px;">
+                                            <tr>
+                                                <td style="padding: 4px 16px; color: #FF4D53; font-weight: bold;">📍</td>
+                                                <td style="padding: 4px 16px 4px 0; color: #4430AA; font-weight: bold; font-size: 14px;">{{ event.city }}</td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                    <td style="width: 24px;"></td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td colspan="5" height="2" style="background-color: #92C4FF;"></td>
+                                </tr>
+                            </table>
+                            {% else %}
+                            <table border="0" cellpadding="0" cellspacing="0" style="width: 100%; background-color: #f8f9fa; border: 3px dashed #92C4FF; border-radius: 8px; margin: 24px auto; text-align: center;">
+                                <tr>
+                                    <td style="padding: 40px 16px;">
+                                        <div style="font-size: 28px; color: #92C4FF;">🎪</div>
+                                        <p style="margin: 8px 0 0; color: #4430AA; font-weight: bold; font-size: 18px;">Пока нет подходящих событий</p>
+                                        <p style="margin: 8px 0 0; color: #666666; font-size: 15px;">Ждите новые анонсы!</p>
+                                    </td>
+                                </tr>
+                            </table>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    <!-- Футер -->
+                    <tr>
+                        <td style="background-color: #f0f4ff; padding: 24px 20px; text-align: center;">
+                            <!-- Кнопка отписки -->
+                            <a href="https://event-newsletter-app.onrender.com/api/unsubscribe/token/{{ user.unsubscribe_token }}/" style="display: inline-block; background-color: #FF4D53; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 20px; font-weight: bold; margin-bottom: 16px;">Отписаться от рассылки</a>
+                            <!-- Градиентная полоска -->
+                            <table border="0" cellpadding="0" cellspacing="0" style="width: 240px; margin: 20px auto;">
+                                <tr>
+                                    <td width="80" height="4" style="background-color: #4430AA;"></td>
+                                    <td width="64" height="4" style="background-color: #FF4D53;"></td>
+                                    <td width="64" height="4" style="background-color: #FFBD00;"></td>
+                                    <td width="32" height="4" style="background-color: #92C4FF;"></td>
+                                </tr>
+                            </table>
+                            <!-- Подпись команды -->
+                            <p style="margin: 4px 0 12px; color: #4430AA; font-weight: bold; font-size: 16px;">С заботой, команда MONTE MOOD</p>
+                            <!-- Нижние точки -->
+                            <table border="0" cellpadding="0" cellspacing="0" style="margin: 12px auto;">
+                                <tr>
+                                    <td width="8" height="8" style="background-color: #FFBD00; border-radius: 50%;"></td>
+                                    <td width="8" height="8" style="background-color: #FF4D53; border-radius: 50%;"></td>
+                                    <td width="8" height="8" style="background-color: #92C4FF; border-radius: 50%;"></td>
+                                    <td width="8" height="8" style="background-color: #4430AA; border-radius: 50%;"></td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- Копирайт -->
+                    <tr>
+                        <td style="background-color: #f0f0f0; padding: 12px 20px; text-align: center; font-size: 12px; color: #666666; border-top: 2px solid #92C4FF;">
+                            © {{ now.year }} <span style="color: #4430AA; font-weight: bold;">MONTE MOOD</span>. Все права защищены.
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>
 

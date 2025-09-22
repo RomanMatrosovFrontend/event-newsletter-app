@@ -41,7 +41,8 @@ def send_newsletter_to_all_users(db: Session):
                     context = {
                         'name': user.email.split('@')[0],
                         'events': events,
-                        'now': datetime.datetime.now()
+                        'now': datetime.datetime.now(),
+                        'user': user
                     }
                     html_body = template.render(context)
 
@@ -107,7 +108,8 @@ def send_newsletter_to_users(db: Session, user_ids: List[int]):
                 context = {
                     'name': user.email.split('@')[0],
                     'events': events,
-                    'now': datetime.datetime.now()
+                    'now': datetime.datetime.now(),
+                    'user': user
                 }
                 html_body = template.render(context)
 

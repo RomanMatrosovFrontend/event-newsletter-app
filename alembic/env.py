@@ -3,6 +3,10 @@ from sqlalchemy import create_engine
 from alembic import context
 import os
 import sys
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 # Добавляем текущую директорию в Python path
 sys.path.append(os.getcwd())
@@ -26,7 +30,7 @@ target_metadata = Base.metadata
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode."""
-    url = config.get_main_option("sqlalchemy.url")
+    url = os.environ.get("DATABASE_URL") or config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -38,7 +42,9 @@ def run_migrations_offline():
 
 def run_migrations_online():
     """Run migrations in 'online' mode."""
-    connectable = create_engine(config.get_main_option("sqlalchemy.url"))
+    url = os.environ.get("DATABASE_URL") or config.get_main_option("sqlalchemy.url")
+    connectable = create_engine(url)
+    
     with connectable.connect() as connection:
         context.configure(
             connection=connection, 
