@@ -14,13 +14,21 @@ def create_user(
     db: Session = Depends(get_db),
     current_admin: str = Depends(get_current_admin)
 ):
+    # Проверка дублирования email
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    db_user = models.User(email=user.email)
+    
+    # Инициализируем модель с учётом is_subscribed
+    db_user = models.User(
+        email=user.email,
+        is_subscribed=user.is_subscribed
+    )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+    
+    # Сохраняем категории
     if user.categories:
         for category in user.categories:
             db.execute(
@@ -29,7 +37,34 @@ def create_user(
                     category=category
                 )
             )
-        db.commit()
+    
+    # Сохраняем города
+    if user.cities:
+        for city in user.cities:
+            db.execute(
+                models.user_cities.insert().values(
+                    user_id=db_user.id,
+                    city=city
+                )
+            )
+    
+    # Сохраняем типы подписок
+    if user.subscription_types:
+        for subscription_type in user.subscription_types:
+            st = db.query(models.SubscriptionType).filter(
+                models.SubscriptionType.code == subscription_type
+            ).first()
+            if st:
+                db.execute(
+                    models.user_subscription_types.insert().values(
+                        user_id=db_user.id,
+                        subscription_type_id=st.id
+                    )
+                )
+    
+    db.commit()
+    
+    # Формируем ответ
     categories = [
         row.category for row in db.execute(
             models.user_categories.select().where(
@@ -53,6 +88,7 @@ def create_user(
         st = db.query(models.SubscriptionType).get(row.subscription_type_id)
         if st:
             subscription_types.append(st.code)
+    
     return schemas.User(
         id=db_user.id,
         email=db_user.email,
@@ -210,6 +246,8 @@ def update_user(
     db_user = db.query(models.User).filter(models.User.id == user_id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    # Обновление email
     if user.email is not None:
         exists = db.query(models.User).filter(
             models.User.email == user.email,
@@ -218,6 +256,12 @@ def update_user(
         if exists:
             raise HTTPException(status_code=400, detail="Email already registered")
         db_user.email = user.email
+    
+    # Обновление статуса подписки
+    if user.is_subscribed is not None:
+        db_user.is_subscribed = user.is_subscribed
+    
+    # Обновление категорий
     if user.categories is not None:
         db.execute(
             models.user_categories.delete().where(
@@ -231,11 +275,46 @@ def update_user(
                     category=category
                 )
             )
-    if user.is_subscribed is not None:
-      db_user.is_subscribed = user.is_subscribed
-
+    
+    # Обновление городов
+    if user.cities is not None:
+        db.execute(
+            models.user_cities.delete().where(
+                models.user_cities.c.user_id == user_id
+            )
+        )
+        for city in user.cities:
+            db.execute(
+                models.user_cities.insert().values(
+                    user_id=user_id,
+                    city=city
+                )
+            )
+    
+    # Обновление типов подписок
+    if user.subscription_types is not None:
+        db.execute(
+            models.user_subscription_types.delete().where(
+                models.user_subscription_types.c.user_id == user_id
+            )
+        )
+        for subscription_type in user.subscription_types:
+            # Найти ID типа подписки по коду
+            st = db.query(models.SubscriptionType).filter(
+                models.SubscriptionType.code == subscription_type
+            ).first()
+            if st:
+                db.execute(
+                    models.user_subscription_types.insert().values(
+                        user_id=user_id,
+                        subscription_type_id=st.id
+                    )
+                )
+    
     db.commit()
     db.refresh(db_user)
+    
+    # Получение данных для ответа
     categories = [
         row.category for row in db.execute(
             models.user_categories.select().where(
@@ -259,6 +338,7 @@ def update_user(
         st = db.query(models.SubscriptionType).get(row.subscription_type_id)
         if st:
             subscription_types.append(st.code)
+    
     return schemas.User(
         id=db_user.id,
         email=db_user.email,

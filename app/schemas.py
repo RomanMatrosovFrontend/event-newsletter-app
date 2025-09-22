@@ -7,6 +7,7 @@ class UserBase(BaseModel):
     categories: List[str] = []
     cities: List[str] = []
     is_subscribed: bool
+    subscription_types: List[str] = []
 
 class UserCreate(UserBase):
     pass
